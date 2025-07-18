@@ -157,6 +157,7 @@ name = "carepilot"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
+    { name = "altair" },
     { name = "celery" },
     { name = "fastapi" },
     { name = "pandas" },
@@ -176,15 +177,20 @@ dev = [
     { name = "mypy" },
     { name = "pytest" },
 ]
+visual = [
+    { name = "pillow" },
+]
 
 [package.metadata]
 requires-dist = [
+    { name = "altair", specifier = ">=5.5.0" },
     { name = "black", marker = "extra == 'dev'", specifier = ">=24.3.0" },
     { name = "celery", specifier = ">=5.3.0" },
     { name = "fastapi", specifier = ">=0.110.0" },
     { name = "isort", marker = "extra == 'dev'", specifier = ">=5.12.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.8.0" },
     { name = "pandas", specifier = ">=2.2.0" },
+    { name = "pillow", marker = "extra == 'visual'" },
     { name = "pyarrow", specifier = ">=15,<16" },
     { name = "pydantic", specifier = ">=2.5.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.4.0" },
@@ -194,7 +200,7 @@ requires-dist = [
     { name = "uvicorn", specifier = ">=0.27.0" },
     { name = "weasyprint", specifier = ">=60.0" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["dev", "visual"]
 
 [[package]]
 name = "celery"
