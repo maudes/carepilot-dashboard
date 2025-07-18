@@ -1,0 +1,83 @@
+# Python 虛擬環境與環境變數
+.venv/
+venv/
+.env
+.env.*
+
+# Python 快取檔案
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 測試工具與覆蓋率報告
+.pytest_cache/
+.coverage
+.coverage.*
+.cache/
+htmlcov/
+
+# 套件打包與發佈
+dist/
+build/
+*.egg-info/
+.eggs/
+*.egg
+
+# 作業系統快取檔案
+.DS_Store
+Thumbs.db
+
+# Streamlit 快取與設定
+.streamlit/config.toml
+.streamlit/secrets.toml
+.streamlit/*.json
+
+# Dev Container 與 VS Code 設定
+.devcontainer/
+.vscode/
+
+# Celery 任務快取與 PID 檔案
+celerybeat-schedule
+celerybeat.pid
+
+# Redis dump 檔案
+dump.rdb
+
+# n8n 本地部署資料與設定
+.n8n/
+.n8n-local-files/
+
+# 資料庫初始化腳本（視情況忽略）
+init_db.py
+
+# Postman 匯出檔案
+*.postman_collection.json
+
+# pandas/分析快取與資料庫
+*.ipynb_checkpoints
+*.log
+*.sqlite3
+*.db
+
+# 圖像與報表輸出
+*.png
+*.jpg
+*.svg
+*.pdf
+output/
+reports/
+
+# Docker 相關
+*.log
+*.pid
+*.sock
+__docker_cache__/
+tmp/
+*.tar
+
+# GitHub Actions 工作流程快取與中繼資料
+.github/workflows/*.yml
+.github/workflows/*.yaml
+.github/.DS_Store
+.github/*_temp/
+.github/*_cache/

@@ -1,0 +1,11 @@
+dev:
+    uv run uvicorn backend.main:app --reload &
+    sleep 2
+    uv run streamlit run dashboard/app.py
+
+test:
+    uv run pytest
+
+lint:
+    uv run black .
+    uv run isort .
