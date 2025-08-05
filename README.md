@@ -37,6 +37,7 @@ carepilot-dashboard/
 │   │   └── settings.py
 │   ├── models/                   # ORM models
 │   │   ├── __init__.py
+│   │   ├── user.py
 │   │   └── umixin.py
 │   ├── routers/                  # API route definitions
 │   ├── schemas/                  # Pydantic schemas
@@ -75,3 +76,4 @@ carepilot-dashboard/
 - **Testing**: Pytest
 
 ---
+
