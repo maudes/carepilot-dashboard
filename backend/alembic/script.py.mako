@@ -4,6 +4,9 @@ Revision ID: ${up_revision}
 Revises: ${down_revision | comma,n}
 Create Date: ${create_date}
 
+# Author: ${os.getenv("USER", "unknown")}
+# Env: ${os.getenv("ENV", "development")}
+
 """
 from typing import Sequence, Union
 
