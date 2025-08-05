@@ -1,5 +1,5 @@
 # Initiate DB
-from models.umixin import Base
+from backend.models.umixin import Base
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from backend.config.settings import settings
