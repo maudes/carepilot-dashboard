@@ -69,11 +69,12 @@ carepilot-dashboard/
 
 ## Technologies Used
 
-- **Backend**: FastAPI, SQLAlchemy, Pydantic
+- **Backend**: FastAPI, SQLAlchemy, Pydantic, Redis
 - **Database**: PostgreSQL with Alembic for migrations
 - **DevOps**: Docker, CI/CD pipelines, multi-env setup
 - **Standards**: FHIR (HL7) for health data interoperability
 - **Testing**: Pytest
 
 ---
+
 
