@@ -8,6 +8,7 @@ from backend.models.umixin import Base
 from backend.db import get_db
 from fastapi.testclient import TestClient
 from backend.main import app
+from backend.redis_client import get_redis_client
 
 # Use SQLite in-memory DB (Rebuild on each test run) & build connection/session
 TEST_DATABASE_URL = "sqlite:///:memory:"
@@ -43,3 +44,9 @@ def client():
     return TestClient(app)
 
 # TsetClient: mimics HTTP requests to FastAPI app
+
+
+@pytest.fixture(scope="session")
+def redis_client_ping():
+    client = get_redis_client()
+    return client

@@ -1,16 +1,15 @@
 from fastapi import FastAPI
 from dotenv import load_dotenv
 import os
-from backend.config.settings import settings
-
-from .db import engine, get_db
-from .models.umixin import Base
-# import .routers all
 
 # Read dotenv settings
 env = os.getenv("ENV", "development")
 load_dotenv(f".env.{env}")
 
+from backend.config.settings import settings
+from .db import engine, get_db
+from .models.umixin import Base
+# import .routers all
 # Create the FastAPI app instance
 app = FastAPI(title="CarePilot API")
 

@@ -2,7 +2,7 @@
 
 from .user import User, Profile, VitalSign, DailyLog, Goal, GenderEnum
 from .umixin import AppBase
-# from .pet import Pet  
+# from .pet import Pet
 
 __all__ = [
     # "Base"

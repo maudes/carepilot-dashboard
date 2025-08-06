@@ -1,3 +1,4 @@
+# For env changes, define all items from env files
 from pydantic_settings import BaseSettings
 from pydantic import ConfigDict
 import os
