@@ -9,17 +9,24 @@ from backend.db import get_db
 from fastapi.testclient import TestClient
 from backend.main import app
 
-# Use SQLite in-memory DB (Rebuild on each test run)
+# Use SQLite in-memory DB (Rebuild on each test run) & build connection/session
 TEST_DATABASE_URL = "sqlite:///:memory:"
 
-engine = create_engine(TEST_DATABASE_URL, connect_args={"check_same_thread": False})
-TestingSessionLocal = sessionmaker(bind=engine, autocommit=False, autoflush=False)
+engine = create_engine(
+    TEST_DATABASE_URL,
+    connect_args={"check_same_thread": False}
+)
+TestingSessionLocal = sessionmaker(
+    bind=engine,
+    autocommit=False,
+    autoflush=False
+)
 
-# Build up test DB
+# Build up test DB (metadata)
 Base.metadata.create_all(bind=engine)
 
 
-# 替換 FastAPI 的 get_db 依賴
+# Replace FastAPI `get_db` dependency
 def override_get_db():
     db = TestingSessionLocal()
     try:
@@ -34,3 +41,5 @@ app.dependency_overrides[get_db] = override_get_db
 @pytest.fixture()
 def client():
     return TestClient(app)
+
+# TsetClient: mimics HTTP requests to FastAPI app

@@ -49,7 +49,7 @@ class Profile(AppBase):
     gender = Column(Enum(GenderEnum, native_enum=False), nullable=False)
     user_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        ForeignKey("user.id"),
         nullable=False
     )
 
@@ -69,7 +69,7 @@ class VitalSign(AppBase):
     spo2 = Column(Integer)
     user_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        ForeignKey("user.id"),
         nullable=False
     )
 
@@ -89,7 +89,7 @@ class DailyLog(AppBase):
     notes = Column(Text)
     user_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        ForeignKey("user.id"),
         nullable=False
     )
 
@@ -103,7 +103,7 @@ class Goal(AppBase):
     goal_text = Column(Text, nullable=False, default="Be Happy & Be Healthy!")
     user_id = Column(
         UUID(as_uuid=True),
-        ForeignKey("users.id"),
+        ForeignKey("user.id"),
         nullable=False
     )
 

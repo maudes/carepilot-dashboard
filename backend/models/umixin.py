@@ -1,9 +1,10 @@
 # SQLAlchemy Declarative Mixin
 from sqlalchemy import Column, DateTime
-from sqlalchemy.ext.declarative import declared_attr, as_declarative
+from sqlalchemy.orm import as_declarative, declared_attr
 from datetime import datetime, timezone
 
 
+# as_declarative ~ Base = declarative_base()
 @as_declarative()
 class Base:
     """
