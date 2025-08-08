@@ -8,7 +8,7 @@ import os
 # for environment variable management
 class Settings(BaseSettings):
     DATABASE_URL: str
-    env: str = "development"
+    env: str
     debug: bool = True
     api_host: str = "127.0.0.1"
     api_port: int = 8000
@@ -19,6 +19,18 @@ class Settings(BaseSettings):
     redis_port: int
     redis_db: int
     redis_password: str = ""
+
+    mail_username: str
+    mail_password: str
+    mail_from: str
+    mail_port: int = 587
+    mail_server: str = "smtp.gmail.com"
+    mail_from_name: str = "CarePilot Team"
+    mail_starttls: bool = True
+    mail_ssl_tls: bool = False
+    use_credentials: bool = True
+    validate_certs: bool = True
+
 
     '''
     upstash_redis_url: str
