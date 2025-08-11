@@ -36,6 +36,6 @@ class UserVerify(UserBase):
 
     @field_validator("otp")
     def otp_validator(cls, otp_str):
-        if not otp_str.isdigit() or len(otp_str) != 6:
-            raise ValueError("The OTP must be 6 digits.")
+        if not otp_str.isdigit() or len(otp_str) != 8:
+            raise ValueError("The OTP must be 8 digits.")
         return otp_str

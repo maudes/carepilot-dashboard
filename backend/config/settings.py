@@ -31,11 +31,14 @@ class Settings(BaseSettings):
     use_credentials: bool = True
     validate_certs: bool = True
 
+    secret_key: str
+    algorithm: str = "HS256"
+    access_token_expire_minutes: int = 30
+    refresh_token_expire_minutes: int = 10080
 
     '''
     upstash_redis_url: str
     upstash_redis_token: str
-    secret_key: str
     weather_api_key: str
     health_news_api_key: str
     '''
