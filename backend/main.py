@@ -18,16 +18,6 @@ app = FastAPI(
     version="0.1.0",
 )
 
-
-@app.get("/")
-def health_check():
-    return {"status": "ok", "message": f"FastAPI is running in {settings.env} 🎉"}
-
-
-@app.get("/hello")
-def say_hello(name: str = "world"):
-    return {"greeting": f"Hello, {name}!"}
-
 """
 app.include_router(
     auth.router,
@@ -37,3 +27,13 @@ app.include_router(
 """
 # app.include_router(user.router, prefix="/api", tags=["User Management"])
 # 為路由組添加前綴和標籤
+
+
+@app.get("/")
+def health_check():
+    return {"status": "ok", "message": f"FastAPI is running in {settings.env} 🎉"}
+
+
+@app.get("/hello")
+def say_hello(name: str = "world"):
+    return {"greeting": f"Hello, {name}!"}

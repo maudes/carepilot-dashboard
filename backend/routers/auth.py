@@ -2,17 +2,19 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from backend.models.user import User
-from backend.schemas.user import UserCreate, UserRead
+from backend.schemas.user import UserCreate, UserRead, UserVerify
 from backend.db import get_db
 from backend.services.otp import otp_generator
 from backend.services.smtp import send_otp_email
+from backend.services.redis import store_otp, verify_otp, fetch_otp
+from fastapi.responses import JSONResponse
 
 # Define a group of auth APIs
 router = APIRouter()
 
 
-# Register with OTP
-@router.post("/register", response_model=User)
+# Register with OTP # response_model is for the output data format; JSONResponse -> None
+@router.post("/register-request", response_model=None)
 async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == payload.email).first()
     if existing_user:
@@ -31,25 +33,40 @@ async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
 
     if not is_success:
         raise HTTPException(status_code=500, detail= f"Failed due to {msg}. Please try again.")
-    
 
     # Save the OTP pwd to the redis server with 30mins - services/redis.py
+    store_otp(payload.email, otp)
+
+    # Create new user and add it into the DB
+    new_user = User(email = payload.email)
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
 
     # Return message and redirect to verify process 
+    return JSONResponse(
+        status_code = 200,
+        content={
+            "message": "OTP sent. Please verify.",
+            "redirect_to": "/auth/register-verify"
+        }
+    )
 
+# Verify OTP # Use UserRead is for protecting sensitvie data
+@router.post("/verify", response_model=UserRead)
+def verify_user(payload: UserVerify, db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == payload.email).first()
+    if not user:
+        raise HTTPException(status_code=400, detail="Cannot find the user.")
 
-# Verify OTP
-@router.post("/register-verify", response_model=User)
+    # Fetch stored otp and verify it
+    stored_otp = fetch_otp(payload.email)
+    if verify_otp(payload.otp, stored_otp, payload.email):
+        user.is_verified = True
+        db.commit()
+        db.refresh(user)
 
-
-    # Receive the input OTP pwd
-
-    # Get the correct OTP pwd from the redis server - services/redis.py
-
-    # Verify if the two are the same
-
-    # Commit the email registeration to db, change is_verified == True
-
+    # Handle redis stuff?
     # return JWT token - services/jwt.py
 
 

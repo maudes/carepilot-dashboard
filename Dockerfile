@@ -1,8 +1,9 @@
 FROM python:3.12-slim
 
-# 安裝系統依賴（PostgreSQL、Redis client 等）
+# 安裝系統依賴（PostgreSQL、WeasyPrint、Redis client 等）
 RUN apt-get update && apt-get install -y \
-    build-essential libpq-dev curl && \
+    build-essential libpq-dev libffi-dev libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
+    curl git && \
     rm -rf /var/lib/apt/lists/*
 
 # 安裝 uv
@@ -11,10 +12,10 @@ RUN pip install uv
 # 設定工作目錄
 WORKDIR /app
 
-# 複製 pyproject.toml 與 uv.lock（若有）
+# 複製 pyproject.toml 與 uv.lock（若存在）
 COPY pyproject.toml uv.lock* ./
 
-# 安裝依賴（uv 會自動解析並安裝）
+# 安裝主依賴（不含 dev/visual）
 RUN uv pip install --system --no-deps -r <(uv pip compile pyproject.toml)
 
 # 複製整個專案
