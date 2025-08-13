@@ -3,17 +3,17 @@ from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
-    Request,
 )
 from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from backend.models.user import User
 from backend.schemas.user import UserCreate, VerifyRequest, UserLogin
-from backend.schemas.token import TokenResponse
+from backend.schemas.token import TokenResponse, TokenPayload
+from fastapi.security import OAuth2PasswordBearer
 from backend.db import get_db
 from backend.services.otp import otp_generator
 from backend.services.smtp import send_otp_email
-from backend.services.redis import store_otp, verify_otp, fetch_otp
+from backend.services.redis_otp import store_otp, verify_otp, fetch_otp
 from backend.services.jwt_token import (
     create_otp_token,
     create_access_token,
@@ -34,7 +34,10 @@ router = APIRouter()
 async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     existing_user = db.query(User).filter(User.email == payload.email).first()
     if existing_user:
-        raise HTTPException(status_code=400, detail="The email has registered.")
+        raise HTTPException(
+            status_code=400,
+            detail="The email has registered."
+        )
 
     # Generate an OTP pwd - services/otp.py
     otp = otp_generator()
@@ -75,7 +78,7 @@ async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
         content={
             "message": "OTP sent. Please verify.",
             "mode": "register",
-            "redirect_to": "/api/auth/verify", 
+            "redirect_to": "/api/auth/verify",
             "token": otp_token,
         }
     )
@@ -181,9 +184,14 @@ def verify_user(
         )
 
 
-# get_current_user()
-"""
-@router.get("/me", response_model=UserRead)
-def get_me(current_user: User = Depends(get_current_user)):
-    return current_user
-"""
+# Decode the access_token from Header in request body
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+
+# get_current_user() -> Focus on verifying access token
+def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenPayload:
+    user_payload = decode_token(token)
+    if user_payload is None or not token_type(user_payload, "access"):
+        raise HTTPException(status_code=401, detail="Please login first.")
+
+    return TokenPayload(**user_payload)
