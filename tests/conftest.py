@@ -47,6 +47,6 @@ def client():
 
 
 @pytest.fixture(scope="session")
-def redis_client_ping():
+def redis_client():
     client = get_redis_client()
     return client

@@ -10,6 +10,7 @@ def test_hello(client):
     assert response.json()["greeting"] == "Hello, Maude!"
 
 
-def test_redis_client_ping(redis_client_ping):
-    response = redis_client_ping.ping()
-    assert response is True
+def test_redis_client(redis_client):
+    redis_client.set("test:foo", "bar", ex=10)
+    value = redis_client.get("test:foo")
+    assert value == "bar"
