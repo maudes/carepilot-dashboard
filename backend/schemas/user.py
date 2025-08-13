@@ -31,11 +31,16 @@ class UserRead(UserBase):
 
 
 # For verification only
-class UserVerify(UserBase):
+class VerifyRequest(BaseModel):
     otp: str
+    token: str  # handled by front-end in request body
 
     @field_validator("otp")
     def otp_validator(cls, otp_str):
         if not otp_str.isdigit() or len(otp_str) != 8:
             raise ValueError("The OTP must be 8 digits.")
         return otp_str
+
+
+class UserLogin(BaseModel):
+    email: EmailStr

@@ -1,7 +1,14 @@
 from backend.redis_client import get_redis_client
+# from datetime import timedelta
 import logging
 
 redis = get_redis_client()
+
+""" Add checking mechanism as below
+MAX_ATTEMPTS = 5 -> locked
+BLOCK_DURATION = timedelta(minutes=30) -> 403
+reset -> once successed, clear the counting
+"""
 
 
 def store_otp(email: str, otp: str, ttl: int = 1800) -> None:

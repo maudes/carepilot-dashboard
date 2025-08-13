@@ -1,19 +1,28 @@
 # Auth related APIs
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import (
+    APIRouter,
+    Depends,
+    HTTPException,
+    Request,
+)
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from backend.models.user import User
-from backend.schemas.user import UserCreate, UserRead, UserVerify
+from backend.schemas.user import UserCreate, VerifyRequest, UserLogin
 from backend.schemas.token import TokenResponse
 from backend.db import get_db
 from backend.services.otp import otp_generator
 from backend.services.smtp import send_otp_email
 from backend.services.redis import store_otp, verify_otp, fetch_otp
 from backend.services.jwt_token import (
+    create_otp_token,
     create_access_token,
     create_refresh_token,
+    decode_token,
     token_type,
 )
-from fastapi.responses import JSONResponse
+from typing import Literal
+
 
 # Define a group of auth APIs
 router = APIRouter()
@@ -39,7 +48,10 @@ async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     )
 
     if not is_success:
-        raise HTTPException(status_code=500, detail= f"Failed due to {msg}. Please try again.")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed due to {msg}. Please try again."
+        )
 
     # Save the OTP pwd to the redis server with 30mins - services/redis.py
     store_otp(payload.email, otp)
@@ -50,31 +62,100 @@ async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_user)
 
+    # Create a token to wrap email for verification
+    otp_payload = {
+        "sub": str(payload.email),
+        "type": "login_otp"
+    }
+    otp_token = create_otp_token(otp_payload)
+
     # Return message and redirect to verify process
-    return JSONResponse(
+    response = JSONResponse(
         status_code=200,
         content={
             "message": "OTP sent. Please verify.",
-            "email": payload.email,
-            "redirect_to": "/api/auth/verify"
+            "mode": "register",
+            "redirect_to": "/api/auth/verify", 
+            "token": otp_token,
         }
     )
+    return response
 
 
-# Verify OTP # Use UserRead for protecting sensitvie data
+# Login
+@router.post("/login-request", response_model=TokenResponse)
+async def login(payload: UserLogin, db: Session = Depends(get_db)):
+    existing_user = db.query(User).filter(User.email == payload.email).first()
+    if existing_user:
+        otp = otp_generator()
+
+        is_success, msg = await send_otp_email(
+            "Your CarePilot One-Time-Password",
+            [payload.email],
+            "otp.html",
+            {"otp": otp},
+        )
+
+        if not is_success:
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed due to {msg}. Please try again."
+            )
+        store_otp(payload.email, otp)
+
+        otp_payload = {
+            "sub": str(payload.email),
+            "type": "login_otp"
+        }
+        otp_token = create_otp_token(otp_payload)
+
+        response = JSONResponse(
+            status_code=200,
+            content={
+                "message": "OTP sent. Please verify.",
+                "mode": "login",
+                "redirect_to": "/api/auth/verify",
+                "token": otp_token,
+            }
+        )
+        return response
+
+    else:
+        raise HTTPException(status_code=404, detail="The user does not exist.")
+
+
+# Verify OTP
 @router.post("/verify", response_model=TokenResponse)
-def verify_user(payload: UserVerify, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == payload.email).first()
+def verify_user(
+    payload: VerifyRequest,
+    mode: Literal["register", "login"],
+    db: Session = Depends(get_db),
+):
+    otp_payload = decode_token(payload.token)
+    if otp_payload is None:
+        raise HTTPException(
+            status_code=400,
+            detail="The token cannot be verified."
+        )
+
+    email = otp_payload.get("sub")
+    user = db.query(User).filter(User.email == email).first()
     if not user:
-        raise HTTPException(status_code=400, detail="Cannot find the user.")
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot find the user."
+        )
 
     # Fetch stored otp and verify it
-    stored_otp = fetch_otp(payload.email)
-    if verify_otp(payload.otp, stored_otp, payload.email):
-        user.is_verified = True
-        db.commit()
-        db.refresh(user)
+    stored_otp = fetch_otp(email)
 
+    if verify_otp(payload.otp, stored_otp, email):
+        if mode == "register":
+            user.is_verified = True
+            db.commit()
+            db.refresh(user)
+
+        # Create Token
         access_payload = {
             "sub": str(user.id),
             "type": "access"
@@ -85,24 +166,19 @@ def verify_user(payload: UserVerify, db: Session = Depends(get_db)):
         }
         access_token = create_access_token(access_payload)
         refresh_token = create_refresh_token(refresh_payload)
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            token_type=token_type,
+            redirect_to="pages/home",
+        )
+
     else:
-        raise ValueError("Invalid OTP value. Please retry.")
-
-    return TokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type=token_type,
-        redirect_to="pages/home.py",
-    )
-
-
-# Login
-    # Recevie email input
-    # Verify it's a valid email and send OTP pwd - service/otp.py/smtp.py
-    # Renew the redis OTP pwd - services/redis.py
-    # Receive the OTP pwd
-    # Verify the OTP with redis one
-    # return JWT token
+        raise HTTPException(
+            status_code=400,
+            detail="Invalid OTP value. Please retry."
+        )
 
 
 # get_current_user()

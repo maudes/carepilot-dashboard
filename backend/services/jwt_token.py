@@ -6,6 +6,7 @@ SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
 ACCESS_TOKEN_EXPIRE_MINUTES = settings.access_token_expire_minutes
 REFRESH_TOKEN_EXPIRE_MINUTES = settings.refresh_token_expire_minutes
+# OTP_TOKEN_EXPIRE_MINUTES
 
 
 # Create user access token; data is for attaching user-info
@@ -37,6 +38,15 @@ def create_refresh_token(data: dict) -> str:
         timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES)
     )
     return refresh_token
+
+
+def create_otp_token(data: dict) -> str:
+    otp_token = create_token(
+        data,
+        "login_otp",
+        timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    )
+    return otp_token
 
 
 # Decode and verify the JWT token

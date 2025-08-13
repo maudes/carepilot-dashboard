@@ -15,10 +15,8 @@ class Settings(BaseSettings):
     api_reload: bool = False
     api_log_level: str = "info"
 
-    redis_host: str
-    redis_port: int
-    redis_db: int
-    redis_password: str = ""
+    upstash_redis_rest_url: str
+    upstash_redis_rest_token: str
 
     mail_username: str
     mail_password: str
