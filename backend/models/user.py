@@ -9,7 +9,8 @@ from sqlalchemy import (
     Enum,
     Float,
     Integer,
-    ForeignKey
+    ForeignKey,
+    CheckConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -46,6 +47,7 @@ class Profile(AppBase):
     height_cm = Column(Float)
     weight_kg = Column(Float)
     body_fat_percent = Column(Float)
+    # gender = Column(String(10), nullable=False)
     gender = Column(Enum(GenderEnum, native_enum=False), nullable=False)
     user_id = Column(
         UUID(as_uuid=True),
@@ -54,6 +56,11 @@ class Profile(AppBase):
     )
 
     user = relationship("User", back_populates="profile")
+    '''
+    __table_args__ = (
+        CheckConstraint("gender IN ('Male', 'Female')", name="gender_check"),
+    )
+    '''
 
 
 class VitalSign(AppBase):

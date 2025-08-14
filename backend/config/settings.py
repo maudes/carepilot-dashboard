@@ -39,9 +39,15 @@ class Settings(BaseSettings):
     upstash_redis_token: str
     weather_api_key: str
     health_news_api_key: str
-    '''
+ 
     env_file: str = f".env.{os.getenv("ENV", "development")}"
     model_config = ConfigDict(env_file=env_file, extra="allow")
+    '''
+    
+    model_config = ConfigDict(
+        env_file=f".env.{os.getenv('ENV', 'development')}",
+        extra="allow"
+    )
     # ConfigDict(key=value)
 
     @property

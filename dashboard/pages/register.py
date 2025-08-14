@@ -1,5 +1,9 @@
 import streamlit as st
 
+
+API_BASE = "http://localhost:8000/api/auth"
+
+st.set_page_config(page_title="Register")
 st.title("Register")
 
 new_email = st.text_input("Email")

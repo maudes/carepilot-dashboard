@@ -84,7 +84,7 @@ async def create_user(
         content={
             "message": "OTP sent. Please verify.",
             "mode": "register",
-            "redirect_to": "/api/auth/verify",
+            "redirect_to": "/verify",
             "token": otp_token,
         }
     )
@@ -127,7 +127,7 @@ async def login(
             content={
                 "message": "OTP sent. Please verify.",
                 "mode": "login",
-                "redirect_to": "/api/auth/verify",
+                "redirect_to": "/verify",
                 "token": otp_token,
             }
         )
@@ -163,7 +163,7 @@ async def verify_user(
     # Fetch stored otp and verify it
     stored_otp = await fetch_otp(redis, email)
 
-    if verify_otp(redis, payload.otp, stored_otp, email):
+    if await verify_otp(redis, payload.otp, stored_otp, email):
         if mode == "register":
             user.is_verified = True
             db.commit()

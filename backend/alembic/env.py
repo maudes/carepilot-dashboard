@@ -8,10 +8,12 @@ env = os.getenv("ENV", "development")
 load_dotenv(f".env.{env}")
 
 from sqlalchemy import engine_from_config
+from sqlalchemy import create_engine
 from sqlalchemy import pool
 from alembic import context
 from backend.config.settings import settings
 
+print("Loaded DATABASE_URL:", settings.DATABASE_URL)
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -61,12 +63,28 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    """Run migrations in 'online' mode.
+    connectable = create_engine(settings.DATABASE_URL, poolclass=pool.NullPool)
+
+    with connectable.connect() as connection:
+        context.configure(
+            connection=connection,
+            target_metadata=target_metadata,
+            compare_type=False,
+            compare_server_default=False,
+        )
+
+        with context.begin_transaction():
+            context.run_migrations()
+
+
+"""
+def run_migrations_online() -> None:
+    "Run migrations in 'online' mode.
 
     In this scenario we need to create an Engine
     and associate a connection with the context.
 
-    """
+    "
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -80,6 +98,7 @@ def run_migrations_online() -> None:
 
         with context.begin_transaction():
             context.run_migrations()
+"""
 
 
 if context.is_offline_mode():
