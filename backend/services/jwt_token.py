@@ -57,7 +57,7 @@ def refresh_access_token(refresh_token: str):
         raise HTTPException(status_code=401, detail="Invalid refresh token.")
 
     # Convert UNIX timestamp to datetime format
-    exp = datetime.fromtimestamp(payload["exp"], tz=timezone.utc) 
+    exp = datetime.fromtimestamp(payload["exp"], tz=timezone.utc)
     if exp < datetime.now(timezone.utc):
         raise HTTPException(status_code=401, detail="Token expired.")
 

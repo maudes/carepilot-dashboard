@@ -38,8 +38,8 @@ async def send_otp_email(
     try:
         # Craete the template
         template = env.get_template(template_name)
-        html_context = template.render(**context)  # ** Unpack dict: k-v pair 
-        
+        html_context = template.render(**context)  # ** Unpack dict: k-v pair
+
         # Prepare the actual email message for sending
         message = MessageSchema(
             subject=subject,

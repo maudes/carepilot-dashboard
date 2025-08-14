@@ -11,6 +11,8 @@ from backend.schemas.user import UserCreate, VerifyRequest, UserLogin
 from backend.schemas.token import TokenResponse, TokenPayload
 from fastapi.security import OAuth2PasswordBearer
 from backend.db import get_db
+from backend.redis_client import get_redis_client
+from upstash_redis.asyncio import Redis
 from backend.services.otp import otp_generator
 from backend.services.smtp import send_otp_email
 from backend.services.redis_otp import store_otp, verify_otp, fetch_otp
@@ -31,7 +33,11 @@ router = APIRouter()
 # Register with OTP
 # response_model is for the output data format; JSONResponse -> None
 @router.post("/register-request", response_model=None)
-async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
+async def create_user(
+    payload: UserCreate,
+    db: Session = Depends(get_db),
+    redis: Redis = Depends(get_redis_client),
+):
     existing_user = db.query(User).filter(User.email == payload.email).first()
     if existing_user:
         raise HTTPException(
@@ -57,7 +63,7 @@ async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
         )
 
     # Save the OTP pwd to the redis server with 30mins - services/redis.py
-    store_otp(payload.email, otp)
+    await store_otp(redis, payload.email, otp)
 
     # Create new user and add it into the DB
     new_user = User(email=payload.email)
@@ -87,7 +93,11 @@ async def create_user(payload: UserCreate, db: Session = Depends(get_db)):
 
 # Login
 @router.post("/login-request", response_model=TokenResponse)
-async def login(payload: UserLogin, db: Session = Depends(get_db)):
+async def login(
+    payload: UserLogin,
+    db: Session = Depends(get_db),
+    redis: Redis = Depends(get_redis_client),
+):
     existing_user = db.query(User).filter(User.email == payload.email).first()
     if existing_user:
         otp = otp_generator()
@@ -104,7 +114,7 @@ async def login(payload: UserLogin, db: Session = Depends(get_db)):
                 status_code=500,
                 detail=f"Failed due to {msg}. Please try again."
             )
-        store_otp(payload.email, otp)
+        await store_otp(redis, payload.email, otp)
 
         otp_payload = {
             "sub": str(payload.email),
@@ -129,10 +139,11 @@ async def login(payload: UserLogin, db: Session = Depends(get_db)):
 
 # Verify OTP
 @router.post("/verify", response_model=TokenResponse)
-def verify_user(
+async def verify_user(
     payload: VerifyRequest,
     mode: Literal["register", "login"],
     db: Session = Depends(get_db),
+    redis: Redis = Depends(get_redis_client),
 ):
     otp_payload = decode_token(payload.token)
     if otp_payload is None:
@@ -150,9 +161,9 @@ def verify_user(
         )
 
     # Fetch stored otp and verify it
-    stored_otp = fetch_otp(email)
+    stored_otp = await fetch_otp(redis, email)
 
-    if verify_otp(payload.otp, stored_otp, email):
+    if verify_otp(redis, payload.otp, stored_otp, email):
         if mode == "register":
             user.is_verified = True
             db.commit()
