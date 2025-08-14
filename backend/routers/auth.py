@@ -184,7 +184,7 @@ async def verify_user(
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
-            token_type=token_type,
+            token_type="bearer",
             redirect_to="pages/home",
         )
 

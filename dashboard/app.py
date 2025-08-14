@@ -1,9 +1,10 @@
 import streamlit as st
 
-# Sidebar content
+# 側邊欄版權資訊
 with st.sidebar:
     st.write("All rights reserved © 2025")
 
+# 根據登入狀態決定可見頁面
 if st.session_state.get("logged_in"):
     pages = {
         "Pages": [
@@ -20,8 +21,10 @@ else:
         "Pages": [
             st.Page("pages/login.py", title="Login"),
             st.Page("pages/register.py", title="Register"),
+            st.Page("pages/verify.py", title="Verify"),
         ]
     }
 
+# 執行導覽
 pg = st.navigation(pages)
 pg.run()
