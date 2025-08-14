@@ -206,3 +206,5 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenPayload:
         raise HTTPException(status_code=401, detail="Please login first.")
 
     return TokenPayload(**user_payload)
+
+# Note: should add force logout logic (with token revoke)

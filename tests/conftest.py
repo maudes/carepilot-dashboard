@@ -1,5 +1,5 @@
-import sys
-print("PYTHONPATH:", sys.path)
+# import sys
+# print("PYTHONPATH:", sys.path)
 # Shared functions and fixtures for tests
 import pytest
 from sqlalchemy import create_engine
