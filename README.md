@@ -7,6 +7,7 @@ CarePilot is a personal project designed to help users record and track their he
 - Multi-environment testing
 - Third-party API integration
 - FHIR data structure transformation
+- OTP and JWT token handling
 
 ---
 
@@ -76,5 +77,6 @@ carepilot-dashboard/
 - **Testing**: Pytest
 
 ---
+
 
 
