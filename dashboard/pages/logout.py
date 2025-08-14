@@ -3,7 +3,7 @@ import streamlit as st
 st.set_page_config(page_title="Logout")
 st.title("Logout")
 if not st.session_state.get("logged_in"):
-    st.switch_page("Login")
+    st.switch_page("pages/login.py")
 
 if st.button("Logout"):
     st.session_state.clear()

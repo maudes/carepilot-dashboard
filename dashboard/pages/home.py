@@ -1,9 +1,10 @@
 import streamlit as st
 import requests
 
-st.set_page_config(page_title="CarePilot")
+st.set_page_config(page_title="Home")
 if not st.session_state.get("logged_in"):
-    st.switch_page("Login")
+    st.error("Please login first.")
+    st.switch_page("pages/login.py")
 
 # Main app title - Dashboard
 headers = {

@@ -35,6 +35,6 @@ if st.button("Verify"):
         st.session_state.access_token = res.json()["access_token"]
         st.session_state.logged_in = True
         st.success("Verification successful!")
-        st.switch_page("home")
+        st.switch_page("pages/home.py")
     else:
         st.error(res.json().get("detail", "Verification failed"))
