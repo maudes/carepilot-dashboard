@@ -15,21 +15,26 @@ router = APIRouter()
 
 
 # Get User Profile: show email, name, gender with values others with none
-@router.get("/user-profile", response_model=ProfileRead)
+@router.get("/profile/me", response_model=ProfileRead)
 def get_profile(
-    payload: ProfileCreate,
     db: Session = Depends(get_db),
     user: TokenPayload = Depends(get_current_user),
 ):
+    if not user:
+        raise HTTPException(status_code=401, detail="Please login first.")
+
     profile = db.query(Profile).filter(Profile.user_id == user.id).first()
-    if profile:
-        pass
+    if not profile:
+        profile = Profile(user_id=user.id)
+        db.add(profile)
+        db.commit()
+        db.refresh(profile)
+        # raise HTTPException(status_code=404, detail="Profile not found.")
+
+    return profile
 
 
-# Post
-
-
-# Get
+# Put
 
 
 # Delete account
