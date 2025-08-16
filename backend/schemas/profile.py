@@ -1,15 +1,18 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 from uuid import UUID
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 
 class GenderEnum(str, Enum):
     Male = "Male"
     Female = "Female"
+    Other = "Other"
 
 
 class ProfileBase(BaseModel):
+    email: EmailStr
     name: str | None = None
     birthday: datetime | None = None
     height_cm: float | None = None
@@ -19,8 +22,8 @@ class ProfileBase(BaseModel):
 
 
 class ProfileCreate(ProfileBase):
-    name: str
-    gender: GenderEnum
+    name: Optional[str] = "User"
+    gender: Optional[GenderEnum] = GenderEnum.OTHER
 
 
 class ProfileUpdate(ProfileBase):

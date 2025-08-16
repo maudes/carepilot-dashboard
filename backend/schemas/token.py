@@ -8,6 +8,10 @@ class TokenPayload(BaseModel):
     exp: int
     type: str
 
+    @property
+    def id(self) -> str:
+        return self.sub
+
 
 # Response data to front-end
 class TokenResponse(BaseModel):

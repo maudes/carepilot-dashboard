@@ -23,6 +23,7 @@ import enum
 class GenderEnum(str, enum.Enum):
     Male = "Male"
     Female = "Female"
+    Other = "Other"
 
 
 class User(AppBase):
@@ -42,13 +43,17 @@ class Profile(AppBase):
     __tablename__ = "profile"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    name = Column(String(50), nullable=False)
+    name = Column(String(50), nullable=False, default="User")
     birthday = Column(DateTime, default=datetime(1940, 1, 1))
     height_cm = Column(Float)
     weight_kg = Column(Float)
     body_fat_percent = Column(Float)
     # gender = Column(String(10), nullable=False)
-    gender = Column(Enum(GenderEnum, native_enum=False), nullable=False)
+    gender = Column(
+        Enum(GenderEnum, native_enum=False),
+        nullable=False,
+        default=GenderEnum.OTHER
+    )
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("user.id"),
