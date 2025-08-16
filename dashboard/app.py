@@ -1,11 +1,16 @@
 import streamlit as st
 
+# 初始化登入狀態
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
 # 側邊欄版權資訊
 with st.sidebar:
     st.write("All rights reserved © 2025")
 
+
 # 根據登入狀態決定可見頁面
-if st.session_state.get("logged_in"):
+if st.session_state.logged_in:
     pages = {
         "Pages": [
             st.Page("pages/home.py", title="Home"),

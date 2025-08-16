@@ -8,4 +8,4 @@ if not st.session_state.get("logged_in"):
 if st.button("Logout"):
     st.session_state.clear()
     st.success("You're logged out.")
-    st.switch_page("Login")
+    st.rerun()

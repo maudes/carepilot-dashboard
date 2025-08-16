@@ -30,11 +30,15 @@ if st.button("Verify"):
         "otp": otp,
         "token": otp_token
     }
-    res = requests.post(f"http://localhost:8000/api/auth/verify?mode={mode}", json=payload)
+    res = requests.post(
+        f"http://localhost:8000/api/auth/verify?mode={mode}",
+        json=payload
+    )
     if res.status_code == 200:
         st.session_state.access_token = res.json()["access_token"]
         st.session_state.logged_in = True
         st.success("Verification successful!")
-        st.switch_page("pages/home.py")
+        # st.switch_page("pages/profile.py")
+        st.rerun()
     else:
         st.error(res.json().get("detail", "Verification failed"))
