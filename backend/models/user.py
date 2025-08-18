@@ -51,7 +51,7 @@ class Profile(AppBase):
     gender = Column(
         Enum(GenderEnum, native_enum=False),
         nullable=False,
-        default=GenderEnum.OTHER
+        default=GenderEnum.Other
     )
     user_id = Column(
         UUID(as_uuid=True),

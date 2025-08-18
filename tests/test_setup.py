@@ -187,4 +187,3 @@ def test_token_expire():
     assert token_type(decode_new_payload, "refresh") is False
     assert decode_new_payload.get("sub") == "2000"
     assert decode_new_payload.get("sub") != "1000"
-

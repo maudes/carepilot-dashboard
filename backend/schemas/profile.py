@@ -23,7 +23,7 @@ class ProfileBase(BaseModel):
 
 class ProfileCreate(ProfileBase):
     name: Optional[str] = "User"
-    gender: Optional[GenderEnum] = GenderEnum.OTHER
+    gender: Optional[GenderEnum] = GenderEnum.Other
 
 
 class ProfileUpdate(ProfileBase):

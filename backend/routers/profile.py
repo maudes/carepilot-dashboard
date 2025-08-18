@@ -7,7 +7,7 @@ from fastapi import (
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
 from backend.models.user import User, Profile
-from backend.schemas.user import ProfileRead, ProfileUpdate
+from backend.schemas.profile import ProfileRead, ProfileUpdate
 from backend.schemas.token import TokenPayload
 from backend.routers.auth import get_current_user
 from backend.db import get_db
@@ -82,7 +82,7 @@ def update_profile(
         # Need to check the is_verified -> adjust auth.py
 
     # Save all the updated fields
-    for key, value in payload.dict(exclude_unset=True).items():
+    for key, value in payload.model_dump(exclude_unset=True).items():
         if hasattr(user_profile, key):
             setattr(user_profile, key, value)
 

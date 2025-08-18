@@ -23,10 +23,10 @@ def mock_template_folder(tmp_path):
     <div style="font-family: sans-serif; text-align: center; color: #333;">
         <h2>Hi, user:</h2>
         <p>
-            Thanks for registering CarePilot.
+            Thanks for using CarePilot.
         </p>
         <p>
-            Pelease complete the registration by below one-time-password:
+            Pelease complete the registration/ login by below one-time-password:
         </p>
         <h1 style="color: #007bff; font-size: 24px; letter-spacing: 5px;">
             {{ otp }}
@@ -78,7 +78,7 @@ async def test_send_otp_email_success(mock_jinja2_env):
         message_schema = mock_fastmail.send_message.call_args[0][0]
         assert message_schema.subject == subject
         assert message_schema.recipients == recipients
-        assert "Pelease complete the registration by below one-time-password:" in message_schema.body
+        assert "Pelease complete the registration/ login by below one-time-password:" in message_schema.body
         assert "123456" in message_schema.body
         
         # 修正斷言：現在直接比較 Enum 物件
@@ -99,7 +99,7 @@ async def test_send_otp_email_template_failure():
         is_success, message = await send_otp_email(
             subject="Test Failure",
             recipients=["fail@example.com"],
-            template_name="nonexistent_template.html", 
+            template_name="nonexistent_template.html",
             context={}
         )
 
