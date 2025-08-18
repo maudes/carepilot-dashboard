@@ -10,7 +10,6 @@ from sqlalchemy import (
     Float,
     Integer,
     ForeignKey,
-    CheckConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship

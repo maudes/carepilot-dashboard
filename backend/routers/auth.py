@@ -40,9 +40,15 @@ async def create_user(
 ):
     existing_user = db.query(User).filter(User.email == payload.email).first()
     if existing_user:
+        if existing_user.deleted_at is not None:
+            raise HTTPException(
+                status_code=400,
+                detail="This email was previously registered and deleted. Please contact support."
+            )
+
         raise HTTPException(
             status_code=400,
-            detail="The email has registered."
+            detail="This email is already registered."
         )
 
     # Generate an OTP pwd - services/otp.py
@@ -100,6 +106,12 @@ async def login(
 ):
     existing_user = db.query(User).filter(User.email == payload.email).first()
     if existing_user:
+        if existing_user.deleted_at is not None:
+            raise HTTPException(
+                status_code=400,
+                detail="This email was previously registered and deleted. Please contact support."
+            )
+
         otp = otp_generator()
 
         is_success, msg = await send_otp_email(
@@ -160,6 +172,12 @@ async def verify_user(
             detail="Cannot find the user."
         )
 
+    if user.deleted_at is not None:
+        raise HTTPException(
+                status_code=400,
+                detail="This email was previously registered and deleted. Please contact support."
+            )
+
     # Fetch stored otp and verify it
     stored_otp = await fetch_otp(redis, email)
 
@@ -200,10 +218,22 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 # get_current_user() -> Focus on verifying access token
-def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenPayload:
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> TokenPayload:
+
     user_payload = decode_token(token)
     if user_payload is None or not token_type(user_payload, "access"):
         raise HTTPException(status_code=401, detail="Please login first.")
+
+    user_id = int(user_payload.get("sub"))
+    user = db.query(User).filter(User.id == user_id).first()
+    if user.deleted_at is not None:
+        raise HTTPException(
+                status_code=400,
+                detail="This email was previously registered and deleted. Please contact support."
+        )
 
     return TokenPayload(**user_payload)
 

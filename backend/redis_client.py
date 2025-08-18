@@ -12,7 +12,3 @@ def get_redis_client() -> Redis:
     )
 
     return redis_client
-
-
-# Now using Singleton -> But should change to #async in the future
-# async 直接建立實例，不用做全域設定，但需要改 redis_otp.py 的設定為 async/await
