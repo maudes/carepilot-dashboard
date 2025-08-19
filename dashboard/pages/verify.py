@@ -28,7 +28,7 @@ otp = st.text_input("Enter OTP")
 if st.button("Verify"):
     payload = {
         "otp": otp,
-        "token": otp_token
+        "token": otp_token,
     }
     res = requests.post(
         f"http://localhost:8000/api/auth/verify?mode={mode}",

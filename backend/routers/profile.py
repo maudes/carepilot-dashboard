@@ -4,50 +4,60 @@ from fastapi import (
     Depends,
     HTTPException,
 )
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 from datetime import datetime, timezone
 from backend.models.user import User, Profile
-from backend.schemas.profile import ProfileRead, ProfileUpdate
-from backend.schemas.token import TokenPayload
-from backend.routers.auth import get_current_user
+from backend.schemas.profile import UserProfileUpdate
+from backend.schemas.user import UserContext
+from backend.routers.auth import get_current_user, logout, oauth2_scheme
+from backend.redis_client import get_redis_client
+from backend.services.jwt_token import revoke_all_tokens
+from upstash_redis.asyncio import Redis
 from backend.db import get_db
 
 router = APIRouter()
 
 
 # Get/ Post user profile
-@router.get("/profile/me", response_model=ProfileRead)
+@router.get("/me", response_model=UserContext)
 def get_profile(
     db: Session = Depends(get_db),
-    user: TokenPayload = Depends(get_current_user),
+    user: User = Depends(get_current_user),
 ):
     if not user:
         raise HTTPException(status_code=401, detail="Please login first.")
 
-    profile = db.query(Profile).filter(Profile.user_id == user.id).first()
-    if not profile:
+    if not user.profile:
         profile = Profile(user_id=user.id)
         db.add(profile)
         db.commit()
         db.refresh(profile)
+        user.profile = profile
         # raise HTTPException(status_code=404, detail="Profile not found.")
+    user = (
+        db.query(User)
+        .options(
+            selectinload(User.profile)
+        )
+        .filter(User.id == user.id)
+        .first()
+    )
 
-    return profile
+    print(f"user.profile: {user.profile}")
+    return UserContext.model_validate(user)
 
 
 # Update user profile
-@router.put("/profile/me", response_model=ProfileRead)
-def update_profile(
-    payload: ProfileUpdate,
+@router.put("/me", response_model=UserContext)
+async def update_profile(
+    payload: UserProfileUpdate,
     db: Session = Depends(get_db),
-    user: TokenPayload = Depends(get_current_user)
+    user: User = Depends(get_current_user),
+    redis: Redis = Depends(get_redis_client),
+    token: str = Depends(oauth2_scheme),
 ):
     if not user:
-        raise HTTPException(status_code=400, detail="Please login first.")
-
-    current_user = db.query(User).filter(User.id == user.id).first()
-    if not current_user:
-        raise HTTPException(status_code=404, detail="User not found.")
+        raise HTTPException(status_code=401, detail="Please login first.")
 
     # In case use the API directly
     user_profile = db.query(Profile).filter(Profile.user_id == user.id).first()
@@ -57,53 +67,56 @@ def update_profile(
         db.commit()
         db.refresh(user_profile)
 
-    # Check the required fields:
-    if not payload.name or not payload.email:
-        raise HTTPException(
-            status_code=401,
-            detail="Email and name are required."
-        )
+    user_data = payload.model_dump(exclude_unset=True)
+    email = user_data.pop("email", None)
 
-    # If there's a new email input:
-    new_email = payload.email.strip()
-    if new_email != current_user.email:
-        exisitng_user = db.query(User).filter(
-            User.email == new_email
-            ).first()
-        if exisitng_user:
+    if email is not None:
+        if email.strip() == "":
             raise HTTPException(
-                status_code=400,
-                detail="The email has registered."
+                status_code=422,
+                detail="Email cannot be empty."
             )
-        current_user.is_verified = False
-        current_user.email = new_email
-
-        # Would need to add the "logout" here to activated the new email
-        # Need to check the is_verified -> adjust auth.py
+        if email != user.email:
+            existing_user = db.query(User).filter(
+                User.email == email
+                ).first()
+            if existing_user:
+                raise HTTPException(
+                    status_code=409,
+                    detail="The email has registered."
+                )
+            user.is_verified = False
+            user.email = email
+            db.commit()
+            await logout(redis, token)
 
     # Save all the updated fields
-    for key, value in payload.model_dump(exclude_unset=True).items():
+    for key, value in user_data.items():
         if hasattr(user_profile, key):
             setattr(user_profile, key, value)
 
     db.commit()
-    db.refresh(user_profile)
-    db.refresh(current_user)
-    return user_profile
+    user = (
+        db.query(User)
+        .options(
+            selectinload(User.profile)
+        )
+        .filter(User.id == user.id)
+        .first()
+    )
+
+    return UserContext.model_validate(user)
 
 
 # Delete account
-@router.delete("/profile/me", response_model=None)
-def delete_profile(
+@router.delete("/me", response_model=None)
+async def delete_profile(
     db: Session = Depends(get_db),
-    user: TokenPayload = Depends(get_current_user)
+    user: User = Depends(get_current_user),
+    redis: Redis = Depends(get_redis_client),
+    token: str = Depends(oauth2_scheme),
 ):
-    if not user:
-        raise HTTPException(status_code=400, detail="Please login first.")
-
-    current_user = db.query(User).filter(User.id == user.id).first()
-    if not current_user:
-        raise HTTPException(status_code=404, detail="User not found.")
-
-    current_user.deleted_at = datetime.now(timezone.utc)
+    user.deleted_at = datetime.now(timezone.utc)
     db.commit()
+    response = await revoke_all_tokens(redis, token)
+    return response

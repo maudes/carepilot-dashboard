@@ -12,13 +12,12 @@ class GenderEnum(str, Enum):
 
 
 class ProfileBase(BaseModel):
-    email: EmailStr
-    name: str | None = None
+    name: Optional[str] = "User"
     birthday: datetime | None = None
     height_cm: float | None = None
     weight_kg: float | None = None
     body_fat_percent: float | None = None
-    gender: GenderEnum | None = None
+    gender: Optional[GenderEnum] = GenderEnum.Other
 
 
 class ProfileCreate(ProfileBase):
@@ -38,3 +37,8 @@ class ProfileRead(ProfileBase):
     deleted_at: datetime | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+# For Profile form update
+class UserProfileUpdate(ProfileBase):
+    email: Optional[EmailStr]

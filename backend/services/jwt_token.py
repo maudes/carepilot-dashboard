@@ -134,18 +134,26 @@ async def validate_token(redis, payload: dict, token_type: str):
 
 # Revoke current token: logout
 async def revoke_token(redis, token: str):
-    payload = decode_token(token)
-    sub = payload.get("sub")
-    jti = payload.get("jti")
-    pattern = f"jti:*:{sub}:{jti}"
-    async for key in redis.scan_iter(match=pattern):
-        await redis.set(key, "revoked")
+    try:
+        payload = decode_token(token)
+        sub = payload.get("sub")
+        jti = payload.get("jti")
+        pattern = f"jti:*:{sub}:{jti}"
+        async for key in redis.scan_iter(match=pattern):
+            await redis.set(key, "revoked")
+        return {"success": True, "message": "Logged out successfully."}
+    except Exception as e:
+        return {"success": False, "message": f"{e}"}
 
 
 # Revoke all tokens: soft-delete
 async def revoke_all_tokens(redis, token: str):
-    payload = decode_token(token)
-    sub = payload.get("sub")
-    pattern = f"jti:*:{sub}:*"
-    async for key in redis.scan_iter(match=pattern):
-        await redis.set(key, "revoked")
+    try:
+        payload = decode_token(token)
+        sub = payload.get("sub")
+        pattern = f"jti:*:{sub}:*"
+        async for key in redis.scan_iter(match=pattern):
+            await redis.set(key, "revoked")
+        return {"success": True, "message": "Deleted successfully."}
+    except Exception as e:
+        return {"success": False, "message": f"{e}"}

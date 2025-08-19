@@ -8,7 +8,7 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session
 from backend.models.user import User
 from backend.schemas.user import UserCreate, VerifyRequest, UserLogin
-from backend.schemas.token import TokenResponse, TokenPayload
+from backend.schemas.token import TokenResponse
 from fastapi.security import OAuth2PasswordBearer
 from backend.db import get_db
 from backend.redis_client import get_redis_client
@@ -27,6 +27,7 @@ from backend.services.jwt_token import (
     revoke_token,
 )
 from typing import Literal
+from uuid import UUID
 
 
 # Define a group of auth APIs
@@ -46,7 +47,10 @@ async def create_user(
         if existing_user.deleted_at is not None:
             raise HTTPException(
                 status_code=400,
-                detail="This email was previously registered and deleted. Please contact support."
+                detail=(
+                    "This email was previously registered and deleted. "
+                    "Please contact support."
+                )
             )
 
         raise HTTPException(
@@ -74,12 +78,6 @@ async def create_user(
     # Save the OTP pwd to the redis server with 30mins - services/redis.py
     await store_otp(redis, payload.email, otp)
 
-    # Create new user and add it into the DB
-    new_user = User(email=payload.email)
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
-
     # Create a token to wrap email for verification
     otp_payload = {
         "sub": str(payload.email),
@@ -100,7 +98,7 @@ async def create_user(
 
 
 # Login
-@router.post("/login-request", response_model=TokenResponse)
+@router.post("/login-request", response_model=None)
 async def login(
     payload: UserLogin,
     db: Session = Depends(get_db),
@@ -111,7 +109,10 @@ async def login(
         if existing_user.deleted_at is not None:
             raise HTTPException(
                 status_code=400,
-                detail="This email was previously registered and deleted. Please contact support."
+                detail=(
+                    "This email was previously registered and deleted. "
+                    "Please contact support."
+                )
             )
 
         otp = otp_generator()
@@ -165,30 +166,45 @@ async def verify_user(
             detail="The token cannot be verified."
         )
 
-    email = otp_payload.get("sub")
-    user = db.query(User).filter(User.email == email).first()
-    if not user:
-        raise HTTPException(
-            status_code=400,
-            detail="Cannot find the user."
-        )
-
-    if user.deleted_at is not None:
-        raise HTTPException(
-                status_code=400,
-                detail="This email was previously registered and deleted. Please contact support."
-            )
-
+    otp_email = otp_payload.get("sub")
     await validate_token(redis, otp_payload, "otp")
 
     # Fetch stored otp and verify it
-    stored_otp = await fetch_otp(redis, email)
+    stored_otp = await fetch_otp(redis, otp_email)
 
-    if await verify_otp(redis, payload.otp, stored_otp, email):
+    if await verify_otp(redis, payload.otp, stored_otp, otp_email):
+        user = db.query(User).filter(User.email == otp_email).first()
         if mode == "register":
+            if user:
+                raise HTTPException(
+                    status_code=400,
+                    detail="User already exists."
+                )
+            user = User(email=otp_email, is_verified=True)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+
+        if mode == "login" and not user.is_verified:
             user.is_verified = True
             db.commit()
             db.refresh(user)
+
+        # Basic checks
+        if not user:
+            raise HTTPException(
+                status_code=400,
+                detail="Cannot find the user."
+            )
+
+        if user.deleted_at is not None:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "This email was previously registered and deleted. "
+                    "Please contact support."
+                )
+            )
 
         # Create Token
         access_payload = {
@@ -223,25 +239,28 @@ async def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
     redis: Redis = Depends(get_redis_client),
-) -> TokenPayload:
+) -> User:
 
     user_payload = decode_token(token)
     if user_payload is None or not token_type(user_payload, "access"):
         raise HTTPException(status_code=401, detail="Please login first.")
 
     user_id = user_payload.get("sub")
-    user = db.query(User).filter(User.id == user_id).first()
+    user = db.query(User).filter(User.id == UUID(user_id)).first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found.")
     if user.deleted_at is not None:
         raise HTTPException(
-                status_code=400,
-                detail="This email was previously registered and deleted. Please contact support."
+            status_code=400,
+            detail=(
+                "This email was previously registered and deleted. "
+                "Please contact support."
+            )
         )
 
     await validate_token(redis, user_payload, "access")
 
-    return TokenPayload(**user_payload)
+    return user
 
 
 # Front-end asks for refresh access token
@@ -260,5 +279,5 @@ async def logout(
     token: str = Depends(oauth2_scheme),
     redis: Redis = Depends(get_redis_client),
 ):
-    await revoke_token(redis, token)
-    return {"message": "Logged out successfully."}
+    result = await revoke_token(redis, token)
+    return result

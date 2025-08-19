@@ -25,13 +25,11 @@ app.include_router(
     tags=["Authentication"]
 )
 
-"""
 app.include_router(
     profile.router,
-    prefix="/api/auth",
+    prefix="/api/profile",
     tags=["UserProfile"]
 )
-"""
 
 # app.include_router(user.router, prefix="/api", tags=["User Management"])
 # 為路由組添加前綴和標籤
