@@ -7,6 +7,7 @@ class TokenPayload(BaseModel):
     sub: str
     exp: int
     type: str
+    jti: str
 
     @property
     def id(self) -> str:

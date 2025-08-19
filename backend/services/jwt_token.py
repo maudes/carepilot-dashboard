@@ -3,6 +3,7 @@ from backend.config.settings import settings
 from jose import jwt, JWTError
 from jose.exceptions import ExpiredSignatureError
 from fastapi import HTTPException
+import uuid
 
 SECRET_KEY = settings.secret_key
 ALGORITHM = settings.algorithm
@@ -19,50 +20,70 @@ def create_token(
 ):
     user_encode = data.copy()
     expire = datetime.now(timezone.utc) + expires_delta
-    user_encode.update({"exp": expire, "type": token_type})
+    jti = str(uuid.uuid4())
+    user_encode.update({
+        "exp": expire,
+        "type": token_type,
+        "jti": jti,
+    })
     encoded_jwt = jwt.encode(user_encode, SECRET_KEY, ALGORITHM)
-    return encoded_jwt
+    return encoded_jwt, jti
+    # jwt returns string:
+    # like: <base64-encoded header>.<base64-encoded payload>.<signature>
 
 
-def create_access_token(data: dict) -> str:
-    access_token = create_token(
+async def create_access_token(redis, data: dict) -> str:
+    access_token, jti = create_token(
         data,
         "access",
         timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
+    user_id = data["sub"]
+    key = f"jti:access:{user_id}:{jti}"
+    expired_seconds = ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    await redis.setex(key, expired_seconds, "valid")
     return access_token
 
 
-def create_refresh_token(data: dict) -> str:
-    refresh_token = create_token(
+async def create_refresh_token(redis, data: dict) -> str:
+    refresh_token, jti = create_token(
         data,
         "refresh",
         timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES)
     )
+    user_id = data["sub"]
+    key = f"jti:refresh:{user_id}:{jti}"
+    expired_seconds = REFRESH_TOKEN_EXPIRE_MINUTES * 60
+    await redis.setex(key, expired_seconds, "valid")
     return refresh_token
 
 
-def create_otp_token(data: dict) -> str:
-    otp_token = create_token(
+async def create_otp_token(redis, data: dict) -> str:
+    otp_token, jti = create_token(
         data,
-        "login_otp",
+        "otp",
         timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     )
+    user_email = data["sub"]
+    key = f"jti:otp:{user_email}:{jti}"
+    expired_seconds = ACCESS_TOKEN_EXPIRE_MINUTES * 60
+    await redis.setex(key, expired_seconds, "valid")
     return otp_token
 
 
-# For front-end use, if access token is expired 
+# For front-end use, if access token is expired
 # # Note: if user.id is worng or deleted?
-def refresh_access_token(refresh_token: str):
+async def refresh_access_token(redis, refresh_token: str):
     payload = decode_token(refresh_token)
     if payload == "expired":
         raise HTTPException(status_code=401, detail="Token expired.")
     if payload is None or not token_type(payload, "refresh"):
         raise HTTPException(status_code=401, detail="Invalid refresh token.")
 
-    new_access_token = create_access_token({
+    await validate_token(redis, payload, "refresh")
+
+    new_access_token = await create_access_token(redis, {
         "sub": payload["sub"],
-        "type": "access"
     })
 
     return new_access_token
@@ -82,3 +103,49 @@ def decode_token(token: str):
 # Verify if token_type is corrent
 def token_type(payload: dict, expected_type: str) -> bool:
     return payload.get("type") == expected_type
+
+
+# Validate token jti
+async def validate_token(redis, payload: dict, token_type: str):
+    jti = payload.get("jti")
+    sub = payload.get("sub")
+
+    if not jti or not sub:
+        raise HTTPException(
+            status_code=400,
+            detail="Missing required token fields."
+        )
+
+    key = f"jti:{token_type}:{sub}:{jti}"
+    redis_jti = await redis.get(key)
+
+    if redis_jti is None:
+        raise HTTPException(
+            status_code=401,
+            detail="Token not found."
+        )
+
+    if redis_jti != "valid":
+        raise HTTPException(
+            status_code=401,
+            detail=f"{token_type} token revoked."
+        )
+
+
+# Revoke current token: logout
+async def revoke_token(redis, token: str):
+    payload = decode_token(token)
+    sub = payload.get("sub")
+    jti = payload.get("jti")
+    pattern = f"jti:*:{sub}:{jti}"
+    async for key in redis.scan_iter(match=pattern):
+        await redis.set(key, "revoked")
+
+
+# Revoke all tokens: soft-delete
+async def revoke_all_tokens(redis, token: str):
+    payload = decode_token(token)
+    sub = payload.get("sub")
+    pattern = f"jti:*:{sub}:*"
+    async for key in redis.scan_iter(match=pattern):
+        await redis.set(key, "revoked")

@@ -1,4 +1,5 @@
 import pytest
+import asyncio
 from fastapi import HTTPException
 from datetime import timedelta
 from backend.services.otp import otp_generator
@@ -78,34 +79,33 @@ async def test_redis_otp_funcs(redis_client):
 
 
 # 6. JWT OTP Token tests
-def test_otp_token():
+@pytest.mark.asyncio
+async def test_otp_token(redis_client):
     email = "jwt_otp@mail.com"
     otp_payload = {
             "sub": email,
-            "type": "login_otp"
         }
-    otp_token = create_otp_token(otp_payload)
+    otp_token = await create_otp_token(redis_client, otp_payload)
     print(otp_token)
     decode_payload = decode_token(otp_token)
 
     assert type(otp_token) is str
     assert type(decode_payload) is dict
-    assert token_type(decode_payload, "login_otp") is True
+    assert token_type(decode_payload, "otp") is True
     assert decode_payload.get("sub") == email
 
 
 # 7. JWT access/ refresh Token tests
-def test_login_token():
+@pytest.mark.asyncio
+async def test_login_token(redis_client):
     access_payload = {
         "sub": "1000",
-        "type": "access"
     }
-    access_token = create_access_token(access_payload)
+    access_token = await create_access_token(redis_client, access_payload)
     refresh_payload = {
         "sub": "1000",
-        "type": "refresh"
     }
-    refresh_token = create_refresh_token(refresh_payload)
+    refresh_token = await create_refresh_token(redis_client, refresh_payload)
 
     decode_access = decode_token(access_token)
     decode_refresh = decode_token(refresh_token)
@@ -125,26 +125,28 @@ def test_login_token():
 
 
 # 8. Test refresh access token tests
-def test_token_expire():
+@pytest.mark.asyncio
+async def test_token_expire(redis_client):
 
     access_payload = {
         "sub": "2000",
-        "type": "access"
     }
-    access_token = create_token(
+    access_token, jti_a = create_token(
         access_payload,
         "access",
         timedelta(seconds=-1)  # Expire immediately
     )
     refresh_payload = {
         "sub": "2000",
-        "type": "refresh"
     }
-    refresh_token = create_token(
+    refresh_token, jti_r = create_token(
         refresh_payload,
         "refresh",
-        timedelta(seconds=10)
+        timedelta(seconds=60)
     )
+    user_id = refresh_payload["sub"]
+    key = f"jti:refresh:{user_id}:{jti_r}"
+    await redis_client.setex(key, 60, "valid")
 
     decode_access = decode_token(access_token)
     decode_refresh = decode_token(refresh_token)
@@ -156,34 +158,48 @@ def test_token_expire():
     assert token_type(decode_refresh, "refresh") is True
     assert decode_refresh.get("sub") == "2000"
 
-    wrong_refresh_token = create_token(
-        refresh_payload,
-        "wrong",
-        timedelta(seconds=10)
-    )
+    redis_value = await redis_client.get(key)
+    assert redis_value == "valid", f"Unexpected Redis value: {redis_value}"
 
-    with pytest.raises(HTTPException) as exc_info:
-        refresh_access_token(wrong_refresh_token)
-
-    assert exc_info.value.status_code == 401
-    assert exc_info.value.detail == "Invalid refresh token."
-
-    exp_refresh_token = create_token(
-        refresh_payload,
-        "refresh",
-        timedelta(seconds=-1)
-    )
-    with pytest.raises(HTTPException) as exc_info_2:
-        refresh_access_token(exp_refresh_token)
-
-    assert exc_info_2.value.status_code == 401
-    assert exc_info_2.value.detail == "Token expired."
-
-    true_new_access = refresh_access_token(refresh_token)
+    true_new_access = await refresh_access_token(redis_client, refresh_token)
     decode_new_payload = decode_token(true_new_access)
+
     assert type(true_new_access) is str
     assert type(decode_new_payload) is dict
     assert token_type(decode_new_payload, "access") is True
     assert token_type(decode_new_payload, "refresh") is False
     assert decode_new_payload.get("sub") == "2000"
     assert decode_new_payload.get("sub") != "1000"
+
+######### wrong refresh token
+    wrong_refresh_token, jti_w = create_token(
+        refresh_payload,
+        "wrong",
+        timedelta(seconds=10)
+    )
+    user_id_w = refresh_payload["sub"]
+    key_w = f"jti:refresh:{user_id_w}:{jti_w}"
+    await redis_client.setex(key_w, 10, "valid")
+
+    with pytest.raises(HTTPException) as exc_info:
+        await refresh_access_token(redis_client, wrong_refresh_token)
+
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.detail == "Invalid refresh token."
+
+######### expired refresh token
+    exp_refresh_token, jti_x = create_token(
+        refresh_payload,
+        "refresh",
+        timedelta(seconds=-1)
+    )
+    user_id_x = refresh_payload["sub"]
+    key_x = f"jti:refresh:{user_id_x}:{jti_x}"
+    await redis_client.setex(key_x, 1, "valid")
+    await asyncio.sleep(1.1)
+
+    with pytest.raises(HTTPException) as exc_info_2:
+        await refresh_access_token(redis_client, exp_refresh_token)
+
+    assert exc_info_2.value.status_code == 401
+    assert exc_info_2.value.detail == "Token expired."

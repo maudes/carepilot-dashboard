@@ -22,6 +22,9 @@ from backend.services.jwt_token import (
     create_refresh_token,
     decode_token,
     token_type,
+    refresh_access_token,
+    validate_token,
+    revoke_token,
 )
 from typing import Literal
 
@@ -80,9 +83,8 @@ async def create_user(
     # Create a token to wrap email for verification
     otp_payload = {
         "sub": str(payload.email),
-        "type": "login_otp"
     }
-    otp_token = create_otp_token(otp_payload)
+    otp_token = await create_otp_token(redis, otp_payload)
 
     # Return message and redirect to verify process
     response = JSONResponse(
@@ -130,9 +132,8 @@ async def login(
 
         otp_payload = {
             "sub": str(payload.email),
-            "type": "login_otp"
         }
-        otp_token = create_otp_token(otp_payload)
+        otp_token = await create_otp_token(redis, otp_payload)
 
         response = JSONResponse(
             status_code=200,
@@ -178,6 +179,8 @@ async def verify_user(
                 detail="This email was previously registered and deleted. Please contact support."
             )
 
+    await validate_token(redis, otp_payload, "otp")
+
     # Fetch stored otp and verify it
     stored_otp = await fetch_otp(redis, email)
 
@@ -190,20 +193,18 @@ async def verify_user(
         # Create Token
         access_payload = {
             "sub": str(user.id),
-            "type": "access"
         }
         refresh_payload = {
             "sub": str(user.id),
-            "type": "refresh"
         }
-        access_token = create_access_token(access_payload)
-        refresh_token = create_refresh_token(refresh_payload)
+        access_token = await create_access_token(redis, access_payload)
+        refresh_token = await create_refresh_token(redis, refresh_payload)
 
         return TokenResponse(
             access_token=access_token,
             refresh_token=refresh_token,
             token_type="bearer",
-            redirect_to="pages/home",
+            redirect_to="/home",
         )
 
     else:
@@ -218,23 +219,46 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
 
 # get_current_user() -> Focus on verifying access token
-def get_current_user(
+async def get_current_user(
     token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    redis: Redis = Depends(get_redis_client),
 ) -> TokenPayload:
 
     user_payload = decode_token(token)
     if user_payload is None or not token_type(user_payload, "access"):
         raise HTTPException(status_code=401, detail="Please login first.")
 
-    user_id = int(user_payload.get("sub"))
+    user_id = user_payload.get("sub")
     user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found.")
     if user.deleted_at is not None:
         raise HTTPException(
                 status_code=400,
                 detail="This email was previously registered and deleted. Please contact support."
         )
 
+    await validate_token(redis, user_payload, "access")
+
     return TokenPayload(**user_payload)
 
-# Note: should add force logout logic (with token revoke)
+
+# Front-end asks for refresh access token
+@router.post("/token-refresh", response_model=None)
+async def refresh_token(
+    token: str = Depends(oauth2_scheme),
+    redis: Redis = Depends(get_redis_client),
+):
+    new_access_token = await refresh_access_token(redis, token)
+    return {"access_token": new_access_token}
+
+
+# Logout
+@router.post("/logout", response_model=None)
+async def logout(
+    token: str = Depends(oauth2_scheme),
+    redis: Redis = Depends(get_redis_client),
+):
+    await revoke_token(redis, token)
+    return {"message": "Logged out successfully."}
