@@ -17,6 +17,8 @@ from backend.services.jwt_token import (
     create_token,
     decode_token,
     token_type,
+    validate_token,
+    revoke_all_tokens
 )
 
 
@@ -124,7 +126,7 @@ async def test_login_token(redis_client):
     assert decode_refresh.get("sub") != "100"
 
 
-# 8. Test refresh access token tests
+# 8. Refresh access token tests
 @pytest.mark.asyncio
 async def test_token_expire(redis_client):
 
@@ -203,3 +205,75 @@ async def test_token_expire(redis_client):
 
     assert exc_info_2.value.status_code == 401
     assert exc_info_2.value.detail == "Token expired."
+
+
+# 9. Token "valid" tests
+@pytest.mark.asyncio
+async def test_valid_tokens(redis_client):
+    otp = {
+        "sub": "123@gmail.com"
+    }
+    otp_token = await create_otp_token(redis_client, otp)
+    otp_payload = decode_token(otp_token)
+    access = {
+        "sub": "1234"
+    }
+    access_token = await create_access_token(redis_client, access)
+    access_payload = decode_token(access_token)
+    refresh = {
+        "sub": "1234"
+    }
+    refresh_token = await create_refresh_token(redis_client, refresh)
+    refresh_payload = decode_token(refresh_token)
+
+    otp_result = await validate_token(redis_client, otp_payload, "otp", True)
+    access_result = await validate_token(redis_client, access_payload, "access", True)
+    refresh_result = await validate_token(redis_client, refresh_payload, "refresh", True)
+
+    assert otp_result["success"] is True
+    assert access_result["success"] is True
+    assert refresh_result["success"] is True
+
+
+# 10. Revoke Token test
+@pytest.mark.asyncio
+async def test_revoke(redis_client):
+    otp = {
+        "sub": "123@xmail.com"
+    }
+    otp_token = await create_otp_token(redis_client, otp)
+    otp_payload = decode_token(otp_token)
+    access = {
+        "sub": "4567"
+    }
+    access_token = await create_access_token(redis_client, access)
+    access_payload = decode_token(access_token)
+
+    refresh = {
+        "sub": "4567"
+    }
+    refresh_token = await create_refresh_token(redis_client, refresh)
+    refresh_payload = decode_token(refresh_token)
+
+    otp_result = await validate_token(redis_client, otp_payload, "otp", True)
+    access_result = await validate_token(redis_client, access_payload, "access", True)
+    refresh_result = await validate_token(redis_client, refresh_payload, "refresh", True)
+    assert otp_result["success"] is True
+    assert access_result["success"] is True
+    assert refresh_result["success"] is True
+
+    result = await revoke_all_tokens(redis_client, access_token)
+    print(result["message"])
+    assert result["success"] is True
+
+    with pytest.raises(HTTPException) as exc_info:
+        await validate_token(redis_client, access_payload, "access", True)
+
+    assert exc_info.value.status_code == 401
+    assert exc_info.value.detail == "access token revoked."
+
+    with pytest.raises(HTTPException) as exc_info_2:
+        await validate_token(redis_client, refresh_payload, "refresh", True)
+
+    assert exc_info_2.value.status_code == 401
+    assert exc_info_2.value.detail == "refresh token revoked."

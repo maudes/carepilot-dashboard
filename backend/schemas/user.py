@@ -1,11 +1,11 @@
-from pydantic import BaseModel, EmailStr, ConfigDict, field_validator
+from pydantic import BaseModel, EmailStr, ConfigDict, field_validator, Field
 from uuid import UUID
 from datetime import datetime
 from backend.schemas.profile import ProfileRead
 from backend.schemas.goal import GoalRead
 from backend.schemas.vitalsign import VitalSignRead
 from backend.schemas.dailylog import DailyLogRead
-from typing import Optional
+from typing import Optional, List
 
 
 # Shared elements of the User schema; not DB auto-generated
@@ -53,9 +53,9 @@ class UserLogin(BaseModel):
 
 # All the merge tables
 class UserContext(UserRead):
-    profile: Optional[ProfileRead]
-    vital_signs: Optional[VitalSignRead]
-    daily_logs: Optional[DailyLogRead]
-    goals: Optional[GoalRead]
+    profile: Optional[ProfileRead] = None
+    vital_signs: List[VitalSignRead] = Field(default_factory=list)
+    daily_logs: List[DailyLogRead] = Field(default_factory=list)
+    goals: List[GoalRead] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)

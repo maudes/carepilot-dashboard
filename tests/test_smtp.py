@@ -6,7 +6,7 @@ from unittest.mock import AsyncMock, patch
 # You need to import MessageType from fastapi_mail
 from backend.services.smtp import send_otp_email, conf
 from jinja2 import Environment, FileSystemLoader
-from fastapi_mail import MessageType # Import the Enum 列舉 here
+from fastapi_mail import MessageType  # Import the Enum 列舉 here
 
 # 修正後的 mock 樣板
 @pytest.fixture

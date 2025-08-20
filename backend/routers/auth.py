@@ -24,7 +24,8 @@ from backend.services.jwt_token import (
     token_type,
     refresh_access_token,
     validate_token,
-    revoke_token,
+    revoke_this_token,
+    revoke_all_tokens,
 )
 from typing import Literal
 from uuid import UUID
@@ -167,7 +168,8 @@ async def verify_user(
         )
 
     otp_email = otp_payload.get("sub")
-    await validate_token(redis, otp_payload, "otp")
+    await validate_token(redis, otp_payload, "otp", False)
+    await revoke_this_token(redis, payload.token)
 
     # Fetch stored otp and verify it
     stored_otp = await fetch_otp(redis, otp_email)
@@ -242,6 +244,8 @@ async def get_current_user(
 ) -> User:
 
     user_payload = decode_token(token)
+    if user_payload == "expired":
+        raise HTTPException(status_code=401, detail="Token expired. Please login again.")
     if user_payload is None or not token_type(user_payload, "access"):
         raise HTTPException(status_code=401, detail="Please login first.")
 
@@ -258,7 +262,7 @@ async def get_current_user(
             )
         )
 
-    await validate_token(redis, user_payload, "access")
+    await validate_token(redis, user_payload, "access", False)
 
     return user
 
@@ -279,5 +283,5 @@ async def logout(
     token: str = Depends(oauth2_scheme),
     redis: Redis = Depends(get_redis_client),
 ):
-    result = await revoke_token(redis, token)
+    result = await revoke_all_tokens(redis, token)
     return result

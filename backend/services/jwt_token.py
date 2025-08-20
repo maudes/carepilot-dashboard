@@ -80,7 +80,7 @@ async def refresh_access_token(redis, refresh_token: str):
     if payload is None or not token_type(payload, "refresh"):
         raise HTTPException(status_code=401, detail="Invalid refresh token.")
 
-    await validate_token(redis, payload, "refresh")
+    await validate_token(redis, payload, "refresh", False)
 
     new_access_token = await create_access_token(redis, {
         "sub": payload["sub"],
@@ -106,7 +106,12 @@ def token_type(payload: dict, expected_type: str) -> bool:
 
 
 # Validate token jti
-async def validate_token(redis, payload: dict, token_type: str):
+async def validate_token(
+    redis,
+    payload: dict,
+    token_type: str,
+    return_result: bool
+):
     jti = payload.get("jti")
     sub = payload.get("sub")
 
@@ -130,30 +135,54 @@ async def validate_token(redis, payload: dict, token_type: str):
             status_code=401,
             detail=f"{token_type} token revoked."
         )
+    if return_result is True:
+        return {"success": True}
 
 
-# Revoke current token: logout
-async def revoke_token(redis, token: str):
+# Revoke current token (single jti, single token)
+async def revoke_this_token(redis, token: str):
     try:
         payload = decode_token(token)
         sub = payload.get("sub")
         jti = payload.get("jti")
         pattern = f"jti:*:{sub}:{jti}"
-        async for key in redis.scan_iter(match=pattern):
-            await redis.set(key, "revoked")
-        return {"success": True, "message": "Logged out successfully."}
+        cursor = 0
+        revoked_count = 0
+        while True:
+            cursor, keys = await redis.scan(cursor, match=pattern)
+            for key in keys:
+                await redis.set(key, "revoked")
+                revoked_count += 1
+            if cursor == 0:
+                break
+        return {
+            "success": True,
+            "message": f"Revoked {revoked_count} token(s)."
+        }
+
     except Exception as e:
         return {"success": False, "message": f"{e}"}
 
 
-# Revoke all tokens: soft-delete
+# Revoke all tokens under same sub(normally user.id -> access/refresh tokens)
 async def revoke_all_tokens(redis, token: str):
     try:
         payload = decode_token(token)
         sub = payload.get("sub")
         pattern = f"jti:*:{sub}:*"
-        async for key in redis.scan_iter(match=pattern):
-            await redis.set(key, "revoked")
-        return {"success": True, "message": "Deleted successfully."}
+        cursor = 0
+        revoked_count = 0
+        while True:
+            cursor, keys = await redis.scan(cursor, match=pattern)
+            for key in keys:
+                await redis.set(key, "revoked")
+                revoked_count += 1
+            if cursor == 0:
+                break
+        return {
+            "success": True,
+            "message": f"Revoked {revoked_count} token(s)."
+        }
+
     except Exception as e:
         return {"success": False, "message": f"{e}"}
