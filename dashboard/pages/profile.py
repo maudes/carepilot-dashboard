@@ -6,18 +6,44 @@ import requests
 st.set_page_config(page_title="My Profile")
 st.title("My Profile")
 
-# 檢查登入狀態
-access_token = st.session_state.get("access_token")
-if not st.session_state.get("logged_in") or not access_token:
-    st.switch_page("pages/login.py")
 
-headers = {
-    "Authorization": f"Bearer {access_token}"
-}
+# Auto-fetch new access token
+def fetch_with_auto_refresh(method, url, json=None):
+    access_token = st.session_state.get("access_token")
+    refresh_token = st.session_state.get("refresh_token")
+
+    headers = {"Authorization": f"Bearer {access_token}"}
+    response = requests.request(method, url, headers=headers, json=json)
+
+    if response.status_code == 401 and refresh_token:
+        refresh_headers = {"Authorization": f"Bearer {refresh_token}"}
+        refresh_res = requests.post("http://localhost:8000/api/auth/token-refresh", headers=refresh_headers)
+
+        if refresh_res.status_code == 200:
+            new_token = refresh_res.json().get("access_token")
+            st.session_state["access_token"] = new_token
+            headers["Authorization"] = f"Bearer {new_token}"
+            response = requests.request(method, url, headers=headers, json=json)
+        else:
+            st.session_state.clear()
+            st.error("Session expired. Please login again.")
+            st.switch_page("pages/login.py")
+
+    return response
+
+
+# 檢查登入狀態
+def require_login():
+    if not st.session_state.get("logged_in") or not st.session_state.get("access_token"):
+        st.warning("You must be logged in to access this page.")
+        st.switch_page("pages/login.py")
+
+
+require_login()
 
 # 取得個人資料
 profile_url = "http://localhost:8000/api/profile/me"
-res = requests.get(profile_url, headers=headers)
+res = fetch_with_auto_refresh("get", profile_url)
 
 if res.status_code != 200:
     print(res.status_code)
@@ -25,6 +51,7 @@ if res.status_code != 200:
     st.stop()
 
 profile_data = res.json()
+
 
 # Age calculator
 def calculate_age(birthday_str: str) -> int:
@@ -50,7 +77,6 @@ with st.form("profile_form"):
         min_value=date(1900, 1, 1),
         max_value=date.today()
     )
-    # age_value = calculate_age(birthday.isoformat())
     age = st.number_input("Age", value=age_value, min_value=0, disabled=True)
     gender = st.selectbox(
         "Gender",
@@ -76,7 +102,7 @@ with st.form("profile_form"):
             "weight_kg": weight_kg,
             "body_fat_percent": body_fat
         }
-        update_res = requests.put(profile_url, headers=headers, json=payload)
+        update_res = fetch_with_auto_refresh("put", profile_url, json=payload)
         if update_res.status_code == 200:
             st.success("Profile updated successfully.")
             st.rerun()
@@ -91,10 +117,15 @@ st.subheader("Danger Zone")
 if st.button("Delete My Account"):
     confirm = st.checkbox("I understand this action is irreversible.")
     if confirm:
-        delete_res = requests.delete(profile_url, headers=headers)
+        delete_res = fetch_with_auto_refresh("delete", profile_url)
         if delete_res.status_code == 200:
             st.session_state.clear()
+            del st.session_state["access_token"]
+            del st.session_state["refresh_token"]
+            del st.session_state["logged_in"]
+
             st.success("Your account has been deleted.")
-            st.rerun()
+            st.switch_page("pages/profile.py")
+
         else:
             st.error(f"Delete failed: {delete_res.json().get('detail', 'Unknown error')}")

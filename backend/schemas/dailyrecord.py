@@ -1,9 +1,11 @@
+# Based on DailyRecord model, combining DailyLog and VitalSigns tables
 from pydantic import BaseModel, ConfigDict
 from uuid import UUID
 from datetime import datetime
 
 
-class VitalSignBase(BaseModel):
+class DailyRecordBase(BaseModel):
+    # VitalSign
     systolic_bp: int | None = None
     diastolic_bp: int | None = None
     pre_glucose: int | None = None
@@ -11,19 +13,27 @@ class VitalSignBase(BaseModel):
     heart_rate: int | None = None
     temperature_celsius: float | None = None
     spo2: int | None = None
+    # DailyLog
+    steps: int | None = None
+    medication: bool | None = None
+    meals_text: str | None = None
+    appetite_level: int | None = None
+    bowel_status: str | None = None
+    mood_rate: int | None = None
+    notes: str | None = None
 
 
-class VitalSignCreate(VitalSignBase):
+class DailyRecordCreate(DailyRecordBase):
+    medication: bool = False
+
+
+class DailyRecordUpdate(DailyRecordBase):
     systolic_bp: int
     diastolic_bp: int
     heart_rate: int
 
 
-class VitalSignUpdate(VitalSignBase):
-    pass
-
-
-class VitalSignRead(VitalSignBase):
+class DailyRecordRead(DailyRecordBase):
     id: UUID
     user_id: UUID
     created_at: datetime

@@ -4,16 +4,17 @@ from sqlalchemy import (
     Column,
     Text,
     String,
-    DateTime,
+    Date,
     Boolean,
     Enum,
     Float,
     Integer,
     ForeignKey,
+    UniqueConstraint,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import date
 from uuid import uuid4
 from .umixin import AppBase
 import enum
@@ -33,9 +34,15 @@ class User(AppBase):
     is_verified = Column(Boolean, default=False)
 
     profile = relationship("Profile", uselist=False, back_populates="user")
-    vital_signs = relationship("VitalSign", back_populates="user")
-    daily_logs = relationship("DailyLog", back_populates="user")
-    goals = relationship("Goal", back_populates="user")
+    vital_sign = relationship("VitalSign", back_populates="user")
+    daily_log = relationship("DailyLog", back_populates="user")
+    goal = relationship("Goal", back_populates="user")
+    daily_record = relationship(
+        "DailyRecord",
+        back_populates="user",
+        order_by="DailyRecord.date"
+    )
+    # userlist=False means 1 to 1 instead of 1 to many
 
 
 class Profile(AppBase):
@@ -43,7 +50,7 @@ class Profile(AppBase):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     name = Column(String(50), nullable=False, default="User")
-    birthday = Column(DateTime, default=datetime(1940, 1, 1))
+    birthday = Column(Date, default=date(1940, 1, 1))
     height_cm = Column(Float)
     weight_kg = Column(Float)
     body_fat_percent = Column(Float)
@@ -56,7 +63,8 @@ class Profile(AppBase):
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("user.id"),
-        nullable=False
+        nullable=False,
+        unique=True,
     )
 
     user = relationship("User", back_populates="profile")
@@ -68,7 +76,7 @@ class Profile(AppBase):
 
 
 class VitalSign(AppBase):
-    __tablename__ = "vital_signs"
+    __tablename__ = "vital_sign"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     systolic_bp = Column(Integer, nullable=False)
@@ -81,14 +89,19 @@ class VitalSign(AppBase):
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("user.id"),
-        nullable=False
+        nullable=False,
     )
 
-    user = relationship("User", back_populates="vital_signs")
+    user = relationship("User", back_populates="vital_sign")
+    daily_record = relationship(
+        "DailyRecord",
+        back_populates="vital_sign",
+        uselist=False
+    )
 
 
 class DailyLog(AppBase):
-    __tablename__ = "daily_logs"
+    __tablename__ = "daily_log"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     steps = Column(Integer)
@@ -101,21 +114,64 @@ class DailyLog(AppBase):
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("user.id"),
-        nullable=False
+        nullable=False,
     )
 
-    user = relationship("User", back_populates="daily_logs")
+    user = relationship("User", back_populates="daily_log")
+    daily_record = relationship(
+        "DailyRecord",
+        back_populates="daily_log",
+        uselist=False
+    )
 
 
 class Goal(AppBase):
-    __tablename__ = "goals"
+    __tablename__ = "goal"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     goal_text = Column(Text, nullable=False, default="Be Happy & Be Healthy!")
     user_id = Column(
         UUID(as_uuid=True),
         ForeignKey("user.id"),
-        nullable=False
+        nullable=False,
+        unique=True,
     )
 
-    user = relationship("User", back_populates="goals")
+    user = relationship("User", back_populates="goal")
+
+
+class DailyRecord(AppBase):
+    __tablename__ = "daily_record"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    date = Column(Date, nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+
+    vital_sign_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("vital_sign.id"),
+        nullable=False,
+        unique=True
+    )
+    daily_log_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("daily_log.id"),
+        nullable=False,
+        unique=True
+    )
+
+    __table_args__ = (
+        UniqueConstraint("user_id", "date", name="unique_user_daily_record"),
+    )
+
+    user = relationship("User", back_populates="daily_record")
+    vital_sign = relationship(
+        "VitalSign",
+        back_populates="daily_record",
+        uselist=False
+    )
+    daily_log = relationship(
+        "DailyLog",
+        back_populates="daily_record",
+        uselist=False
+    )

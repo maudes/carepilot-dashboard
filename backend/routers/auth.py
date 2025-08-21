@@ -245,7 +245,10 @@ async def get_current_user(
 
     user_payload = decode_token(token)
     if user_payload == "expired":
-        raise HTTPException(status_code=401, detail="Token expired. Please login again.")
+        raise HTTPException(
+            status_code=401,
+            detail="Token expired. Please login again."
+        )
     if user_payload is None or not token_type(user_payload, "access"):
         raise HTTPException(status_code=401, detail="Please login first.")
 

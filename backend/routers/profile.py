@@ -118,5 +118,6 @@ async def delete_profile(
 ):
     user.deleted_at = datetime.now(timezone.utc)
     db.commit()
+    db.refresh(user)
     response = await revoke_all_tokens(redis, token)
     return response

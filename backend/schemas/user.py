@@ -3,8 +3,7 @@ from uuid import UUID
 from datetime import datetime
 from backend.schemas.profile import ProfileRead
 from backend.schemas.goal import GoalRead
-from backend.schemas.vitalsign import VitalSignRead
-from backend.schemas.dailylog import DailyLogRead
+from backend.schemas.dailyrecord import DailyRecordRead
 from typing import Optional, List
 
 
@@ -54,8 +53,7 @@ class UserLogin(BaseModel):
 # All the merge tables
 class UserContext(UserRead):
     profile: Optional[ProfileRead] = None
-    vital_signs: List[VitalSignRead] = Field(default_factory=list)
-    daily_logs: List[DailyLogRead] = Field(default_factory=list)
+    daily_records: List[DailyRecordRead] = Field(default_factory=list)
     goals: List[GoalRead] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
