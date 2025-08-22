@@ -7,8 +7,19 @@ st.set_page_config(page_title="My Profile")
 st.title("My Profile")
 
 
+# 檢查登入狀態
+def require_login():
+    if not st.session_state.get("logged_in") or not st.session_state.get("access_token"):
+        st.warning("You must be logged in to access this page.")
+        st.switch_page("pages/login.py")
+        st.rerun()
+
+
+require_login()
+
+
 # Auto-fetch new access token
-def fetch_with_auto_refresh(method, url, json=None):
+def auto_refresh(method, url, json=None):
     access_token = st.session_state.get("access_token")
     refresh_token = st.session_state.get("refresh_token")
 
@@ -32,18 +43,9 @@ def fetch_with_auto_refresh(method, url, json=None):
     return response
 
 
-# 檢查登入狀態
-def require_login():
-    if not st.session_state.get("logged_in") or not st.session_state.get("access_token"):
-        st.warning("You must be logged in to access this page.")
-        st.switch_page("pages/login.py")
-
-
-require_login()
-
 # 取得個人資料
 profile_url = "http://localhost:8000/api/profile/me"
-res = fetch_with_auto_refresh("get", profile_url)
+res = auto_refresh("get", profile_url)
 
 if res.status_code != 200:
     print(res.status_code)
@@ -102,7 +104,7 @@ with st.form("profile_form"):
             "weight_kg": weight_kg,
             "body_fat_percent": body_fat
         }
-        update_res = fetch_with_auto_refresh("put", profile_url, json=payload)
+        update_res = auto_refresh("put", profile_url, json=payload)
         if update_res.status_code == 200:
             st.success("Profile updated successfully.")
             st.rerun()
@@ -114,18 +116,18 @@ with st.form("profile_form"):
 st.markdown("---")
 st.subheader("Danger Zone")
 
-if st.button("Delete My Account"):
-    confirm = st.checkbox("I understand this action is irreversible.")
-    if confirm:
-        delete_res = fetch_with_auto_refresh("delete", profile_url)
-        if delete_res.status_code == 200:
-            st.session_state.clear()
-            del st.session_state["access_token"]
-            del st.session_state["refresh_token"]
-            del st.session_state["logged_in"]
+confirm = st.button("Delete My Account")
+if confirm:
+    delete_res = auto_refresh("delete", profile_url)
+    if delete_res.status_code == 200:
+        # 清除指定的 session key（避免 KeyError）
+        for key in ["access_token", "refresh_token", "logged_in"]:
+            if key in st.session_state:
+                del st.session_state[key]
 
-            st.success("Your account has been deleted.")
-            st.switch_page("pages/profile.py")
+        st.success("Your account has been deleted.")
+        st.switch_page("pages/profile.py")
 
-        else:
-            st.error(f"Delete failed: {delete_res.json().get('detail', 'Unknown error')}")
+    else:
+        st.error(f"Delete failed: {delete_res.json().get('detail', 'Unknown error')}")
+

@@ -117,6 +117,17 @@ async def delete_profile(
     token: str = Depends(oauth2_scheme),
 ):
     user.deleted_at = datetime.now(timezone.utc)
+
+    # Delete user related data
+    if user.profile:
+        db.delete(user.profile)
+
+    if user.daily_record:
+        for record in user.daily_record:
+            db.delete(record)
+
+    # if user.goal:
+
     db.commit()
     db.refresh(user)
     response = await revoke_all_tokens(redis, token)

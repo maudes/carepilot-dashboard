@@ -8,14 +8,14 @@ st.title("Logout")
 
 # 檢查是否已登入且有 access_token
 access_token = st.session_state.get("access_token")
-email = st.session_state.get("email")
+# user = st.session_state.get("user.id")
 
 if not st.session_state.get("logged_in") or not access_token:
     st.warning("You are not logged in. Redirecting to login page...")
     st.switch_page("pages/login.py")
 
 # 顯示目前登入帳號
-st.markdown(f"Logged in as: `{email}`")
+# st.markdown(f"Logged in as: `{user}`")
 
 # 登出按鈕
 if st.button("Logout"):

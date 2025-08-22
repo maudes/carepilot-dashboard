@@ -34,13 +34,13 @@ class User(AppBase):
     is_verified = Column(Boolean, default=False)
 
     profile = relationship("Profile", uselist=False, back_populates="user")
-    vital_sign = relationship("VitalSign", back_populates="user")
-    daily_log = relationship("DailyLog", back_populates="user")
+    # vital_sign = relationship("VitalSign", back_populates="user")
+    # daily_log = relationship("DailyLog", back_populates="user")
     goal = relationship("Goal", back_populates="user")
     daily_record = relationship(
         "DailyRecord",
         back_populates="user",
-        order_by="DailyRecord.date"
+        order_by="DailyRecord.record_date"
     )
     # userlist=False means 1 to 1 instead of 1 to many
 
@@ -92,11 +92,11 @@ class VitalSign(AppBase):
         nullable=False,
     )
 
-    user = relationship("User", back_populates="vital_sign")
+    # user = relationship("User", back_populates="vital_sign")
     daily_record = relationship(
         "DailyRecord",
         back_populates="vital_sign",
-        uselist=False
+        uselist=False,
     )
 
 
@@ -117,11 +117,11 @@ class DailyLog(AppBase):
         nullable=False,
     )
 
-    user = relationship("User", back_populates="daily_log")
+    # user = relationship("User", back_populates="daily_log")
     daily_record = relationship(
         "DailyRecord",
         back_populates="daily_log",
-        uselist=False
+        uselist=False,
     )
 
 
@@ -144,7 +144,7 @@ class DailyRecord(AppBase):
     __tablename__ = "daily_record"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
-    date = Column(Date, nullable=False)
+    record_date = Column(Date, nullable=False)
     user_id = Column(UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
 
     vital_sign_id = Column(
@@ -161,17 +161,25 @@ class DailyRecord(AppBase):
     )
 
     __table_args__ = (
-        UniqueConstraint("user_id", "date", name="unique_user_daily_record"),
+        UniqueConstraint(
+            "user_id",
+            "record_date",
+            name="unique_user_daily_record"
+        ),
     )
 
     user = relationship("User", back_populates="daily_record")
     vital_sign = relationship(
         "VitalSign",
         back_populates="daily_record",
-        uselist=False
+        uselist=False,
+        cascade="all, delete-orphan",
+        single_parent=True
     )
     daily_log = relationship(
         "DailyLog",
         back_populates="daily_record",
-        uselist=False
+        uselist=False,
+        cascade="all, delete-orphan",
+        single_parent=True
     )

@@ -9,7 +9,7 @@ load_dotenv(f".env.{env}")
 from backend.config.settings import settings
 from .db import engine, get_db
 from .models.umixin import Base
-from backend.routers import auth, profile
+from backend.routers import auth, profile, record
 # import .routers all
 # Create the FastAPI app instance
 app = FastAPI(
@@ -29,6 +29,12 @@ app.include_router(
     profile.router,
     prefix="/api/profile",
     tags=["UserProfile"]
+)
+
+app.include_router(
+    record.router,
+    prefix="/api/record",
+    tags=["DailyRecord"]
 )
 
 # app.include_router(user.router, prefix="/api", tags=["User Management"])

@@ -15,7 +15,7 @@ if st.session_state.logged_in:
         "Pages": [
             st.Page("pages/home.py", title="Home"),
             st.Page("pages/profile.py", title="My Profile"),
-            st.Page("pages/daily.py", title="My Daily Records"),
+            st.Page("pages/daily.py", title="My Daily Record"),
             st.Page("pages/history.py", title="My History"),
             st.Page("pages/stats.py", title="My Health Statistics"),
             st.Page("pages/logout.py", title="Logout"),
