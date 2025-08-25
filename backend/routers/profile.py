@@ -126,7 +126,8 @@ async def delete_profile(
         for record in user.daily_record:
             db.delete(record)
 
-    # if user.goal:
+    if user.goal:
+        db.delete(user.goal)
 
     db.commit()
     db.refresh(user)

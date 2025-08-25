@@ -7,7 +7,7 @@ st.set_page_config(page_title="My Profile")
 st.title("My Profile")
 
 
-# 檢查登入狀態
+# Check Login state
 def require_login():
     if not st.session_state.get("logged_in") or not st.session_state.get("access_token"):
         st.warning("You must be logged in to access this page.")
@@ -33,17 +33,18 @@ def auto_refresh(method, url, json=None):
         if refresh_res.status_code == 200:
             new_token = refresh_res.json().get("access_token")
             st.session_state["access_token"] = new_token
-            headers["Authorization"] = f"Bearer {new_token}"
-            response = requests.request(method, url, headers=headers, json=json)
+            st.session_state["logged_in"] = True
+            st.rerun()  # Rerun, use the new token
         else:
             st.session_state.clear()
             st.error("Session expired. Please login again.")
             st.switch_page("pages/login.py")
+            st.rerun()
 
     return response
 
 
-# 取得個人資料
+# Get user profile
 profile_url = "http://localhost:8000/api/profile/me"
 res = auto_refresh("get", profile_url)
 
@@ -65,10 +66,19 @@ def calculate_age(birthday_str: str) -> int:
         return 0
 
 
-### Profile Contend ###
+def calculate_bmi(height: float, weight: float) -> float:
+    if height <= 0 or weight <= 0:
+        return 0.0
+    return round(weight / ((height / 100) ** 2), 1)
+
+
+### Profile Content ###
 profile = profile_data.get("profile", {})
 birthday_str = profile.get("birthday")
+height_cm = profile.get("height_cm", 0.0)
+weight_kg = profile.get("weight_kg", 0.0)
 age_value = calculate_age(birthday_str) if birthday_str else 0
+bmi_value = calculate_bmi(height_cm, weight_kg) if height_cm and weight_kg else 0.0
 
 with st.form("profile_form"):
     email = st.text_input("Email", value=profile_data.get("email", ""))
@@ -87,6 +97,16 @@ with st.form("profile_form"):
     )
     height_cm = st.number_input("Height (cm)", value=profile.get("height_cm") or 0.0, min_value=0.0)
     weight_kg = st.number_input("Weight (kg)", value=profile.get("weight_kg") or 0.0, min_value=0.0)
+    bmi = st.number_input("BMI", value=bmi_value, min_value=0.0, disabled=True)
+    if bmi < 18.5:
+        st.markdown(f"<span style='color:red'>⚠️ Underweight — Please pay attention to your nutrition.</span>", unsafe_allow_html=True)
+    elif bmi < 24:
+        st.markdown(f"<span style='color:black'>✅ Normal — Keep up the healthy lifestyle!</span>", unsafe_allow_html=True)
+    elif bmi < 27:
+        st.markdown(f"<span style='color:orange'>⚠️ Slightly Overweight — Time to move more and stay active!</span>", unsafe_allow_html=True)
+    else:
+        st.markdown(f"<span style='color:red'>❗ Obese — Consider improving your diet and exercise habits</span>", unsafe_allow_html=True)
+    
     body_fat = st.number_input(
         "Body Fat (%)",
         value=profile.get("body_fat_percent") or 0.0,
@@ -112,7 +132,7 @@ with st.form("profile_form"):
             st.error(f"Update failed: {update_res.json().get('detail', 'Unknown error')}")
 
 
-# 危險區塊：刪除帳號
+# Danger Zone: Delete Account
 st.markdown("---")
 st.subheader("Danger Zone")
 
@@ -120,7 +140,7 @@ confirm = st.button("Delete My Account")
 if confirm:
     delete_res = auto_refresh("delete", profile_url)
     if delete_res.status_code == 200:
-        # 清除指定的 session key（避免 KeyError）
+        # Clean session keys（Avoid KeyError）
         for key in ["access_token", "refresh_token", "logged_in"]:
             if key in st.session_state:
                 del st.session_state[key]
@@ -130,4 +150,3 @@ if confirm:
 
     else:
         st.error(f"Delete failed: {delete_res.json().get('detail', 'Unknown error')}")
-

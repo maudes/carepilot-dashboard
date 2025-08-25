@@ -54,6 +54,6 @@ class UserLogin(BaseModel):
 class UserContext(UserRead):
     profile: Optional[ProfileRead] = None
     daily_records: List[DailyRecordRead] = Field(default_factory=list)
-    goals: List[GoalRead] = Field(default_factory=list)
+    goals: Optional[GoalRead] = None
 
     model_config = ConfigDict(from_attributes=True)

@@ -6,7 +6,7 @@ st.set_page_config(page_title="My Daily Record")
 st.title("My Daily Record")
 
 
-# 檢查登入狀態
+# Check Login state
 def require_login():
     if not st.session_state.get("logged_in") or not st.session_state.get("access_token"):
         st.warning("You must be logged in to access this page.")
@@ -17,7 +17,7 @@ def require_login():
 require_login()
 
 
-# 自動刷新 access token
+# Auto-refresh access token
 def auto_refresh(method, url, json=None):
     access_token = st.session_state.get("access_token")
     refresh_token = st.session_state.get("refresh_token")
@@ -32,12 +32,13 @@ def auto_refresh(method, url, json=None):
         if refresh_res.status_code == 200:
             new_token = refresh_res.json().get("access_token")
             st.session_state["access_token"] = new_token
-            headers["Authorization"] = f"Bearer {new_token}"
-            response = requests.request(method, url, headers=headers, json=json)
+            st.session_state["logged_in"] = True
+            st.rerun()  # 重新執行整個 app，下一輪會用新的 access_token
         else:
             st.session_state.clear()
             st.error("Session expired. Please login again.")
             st.switch_page("pages/login.py")
+            st.rerun()
 
     return response
 
@@ -46,10 +47,10 @@ def auto_refresh(method, url, json=None):
 record_url = "http://localhost:8000/api/record/today"
 
 
-# 取得今日紀錄
+# Get Today's Record
 res = auto_refresh("get", record_url)
 record_data = res.json() if res.status_code == 200 else {}
-is_existing_record = "id" in record_data  # 判斷是否已有紀錄
+is_existing_record = "id" in record_data  # Check if the record exists
 
 
 def get_nested_value(data, *keys, default=None):
@@ -59,7 +60,7 @@ def get_nested_value(data, *keys, default=None):
     return data if data else default
 
 
-# 表單輸入
+# Input form for today's record
 with st.form("daily_record_form"):
     st.subheader("Today's Vitals & Logs")
 
@@ -69,26 +70,58 @@ with st.form("daily_record_form"):
         value=get_nested_value(record_data, "vital_sign", "systolic_bp", default=0),
         min_value=0
     )
+    if systolic_bp != 0:
+        if systolic_bp < 90:
+            st.warning("❗ Systolic BP is critically low. Please consult a doctor.")
+        elif systolic_bp > 200:
+            st.warning("❗ Systolic BP is extremely high. Please consult a doctor immediately.")
+        elif systolic_bp > 140:
+            st.error("⚠️ Hypertension alert. Please consult a doctor or take medication.")
+
     diastolic_bp = st.number_input(
         "Diastolic BP",
         value=get_nested_value(record_data, "vital_sign", "diastolic_bp", default=0),
         min_value=0
     )
+    if diastolic_bp != 0:
+        if diastolic_bp < 60:
+            st.error("⚠️ Hypotension alert. Please consult a doctor.")
+        elif diastolic_bp > 90:
+            st.error("⚠️ Hypertension alert. Please consult a doctor or take medication.")
+
     pre_glucose = st.number_input(
         "Pre-meal Glucose",
         value=get_nested_value(record_data, "vital_sign", "pre_glucose", default=0),
         min_value=0
     )
+    if pre_glucose != 0:
+        if pre_glucose < 60:
+            st.warning("❗ Hypoglycemia alert. Please intake food.")
+        elif pre_glucose > 110:
+            st.error("⚠️ High pre-meal glucose.")
+
     post_glucose = st.number_input(
         "Post-meal Glucose",
         value=get_nested_value(record_data, "vital_sign", "post_glucose", default=0),
         min_value=0
     )
+    if post_glucose != 0:
+        if post_glucose < 60:
+            st.warning("❗ Hypoglycemia alert. Please intake food.")
+        elif post_glucose > 150:
+            st.error("⚠️ High pre-meal glucose.")
+    
     heart_rate = st.number_input(
         "Heart Rate",
         value=get_nested_value(record_data, "vital_sign", "heart_rate", default=0),
         min_value=0
     )
+    if heart_rate != 0:
+        if heart_rate < 50:
+            st.warning("❗ Extremely low heart rate.Please consult a doctor.")
+        elif heart_rate > 150:
+            st.warning("❗ Extremely high heart rate. Please consult a doctor immediately.")
+
     temperature = st.number_input(
         "Temperature (°C)",
         value=round(
@@ -103,12 +136,21 @@ with st.form("daily_record_form"):
         step=0.1,
         format="%.1f",
     )
+    if temperature != 0:
+        if temperature < 32:
+            st.warning("❗ Extremely low temperature.Please consult a doctor.")
+        elif temperature > 41:
+            st.warning("❗ Extremely high temperature. Please consult a doctor immediately.")
+
     spo2 = st.number_input(
         "SpO2 (%)",
         value=get_nested_value(record_data, "vital_sign", "spo2", default=0),
         min_value=0,
         max_value=100
     )
+    if spo2 != 0:
+        if spo2 < 90:
+            st.warning("❗ Extremely low blood oxygen saturation.Please consult a doctor.")
 
     # Logs
     steps = st.number_input(
@@ -184,7 +226,7 @@ with st.form("daily_record_form"):
             st.error(f"Save failed: {error_detail}")
 
 
-# 危險區塊：刪除今日紀錄
+# Danger zone: Delete today's record
 st.markdown("---")
 
 if is_existing_record:
