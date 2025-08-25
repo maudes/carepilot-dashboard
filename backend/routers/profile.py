@@ -5,6 +5,7 @@ from fastapi import (
     HTTPException,
 )
 from sqlalchemy.orm import Session, selectinload
+from fastapi.responses import JSONResponse
 from datetime import datetime, timezone
 from backend.models.user import User, Profile
 from backend.schemas.profile import UserProfileUpdate
@@ -132,4 +133,4 @@ async def delete_profile(
     db.commit()
     db.refresh(user)
     response = await revoke_all_tokens(redis, token)
-    return response
+    return JSONResponse(content=response)

@@ -36,7 +36,7 @@ class User(AppBase):
     profile = relationship("Profile", uselist=False, back_populates="user")
     # vital_sign = relationship("VitalSign", back_populates="user")
     # daily_log = relationship("DailyLog", back_populates="user")
-    goal = relationship("Goal", back_populates="user")
+    goal = relationship("Goal", uselist=False, back_populates="user")
     daily_record = relationship(
         "DailyRecord",
         back_populates="user",

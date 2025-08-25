@@ -98,15 +98,16 @@ with st.form("profile_form"):
     height_cm = st.number_input("Height (cm)", value=profile.get("height_cm") or 0.0, min_value=0.0)
     weight_kg = st.number_input("Weight (kg)", value=profile.get("weight_kg") or 0.0, min_value=0.0)
     bmi = st.number_input("BMI", value=bmi_value, min_value=0.0, disabled=True)
-    if bmi < 18.5:
-        st.markdown(f"<span style='color:red'>⚠️ Underweight — Please pay attention to your nutrition.</span>", unsafe_allow_html=True)
-    elif bmi < 24:
-        st.markdown(f"<span style='color:black'>✅ Normal — Keep up the healthy lifestyle!</span>", unsafe_allow_html=True)
-    elif bmi < 27:
-        st.markdown(f"<span style='color:orange'>⚠️ Slightly Overweight — Time to move more and stay active!</span>", unsafe_allow_html=True)
-    else:
-        st.markdown(f"<span style='color:red'>❗ Obese — Consider improving your diet and exercise habits</span>", unsafe_allow_html=True)
-    
+    if not bmi == 0.0:
+        if bmi < 18.5:
+            st.markdown(f"<span style='color:red'>⚠️ Underweight — Please pay attention to your nutrition.</span>", unsafe_allow_html=True)
+        elif bmi < 24:
+            st.markdown(f"<span style='color:black'>✅ Normal — Keep up the healthy lifestyle!</span>", unsafe_allow_html=True)
+        elif bmi < 27:
+            st.markdown(f"<span style='color:orange'>⚠️ Slightly Overweight — Time to move more and stay active!</span>", unsafe_allow_html=True)
+        else:
+            st.markdown(f"<span style='color:red'>❗ Obese — Consider improving your diet and exercise habits</span>", unsafe_allow_html=True)
+        
     body_fat = st.number_input(
         "Body Fat (%)",
         value=profile.get("body_fat_percent") or 0.0,

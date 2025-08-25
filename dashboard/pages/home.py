@@ -55,7 +55,13 @@ st.title("My Health :blue[Goal]!")
 st.write(f"Welcome {st.session_state.get('email', 'User')}, it's your _personal health dashboard_!")
 
 default_goal = "Be Happy & Be Healthy!"
-goal = st.text_input("Please enter your health goal: ", value=user_goal)
+goal = st.text_input(
+    "Please enter your health goal: ",
+    value=user_goal.get(
+        "goal_text",
+        default_goal,
+    )
+)
 
 update = st.button("Update")
 if update:
