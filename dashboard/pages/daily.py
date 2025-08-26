@@ -110,7 +110,7 @@ with st.form("daily_record_form"):
             st.warning("❗ Hypoglycemia alert. Please intake food.")
         elif post_glucose > 150:
             st.error("⚠️ High pre-meal glucose.")
-    
+
     heart_rate = st.number_input(
         "Heart Rate",
         value=get_nested_value(record_data, "vital_sign", "heart_rate", default=0),
