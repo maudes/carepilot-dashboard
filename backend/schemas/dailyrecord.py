@@ -53,6 +53,7 @@ class DailyRecordCreate(DailyRecordBase):
 
 
 class DailyRecordUpdate(BaseModel):
+    record_date: date = Field(default=date.today())
     vital_sign: VitalSignBase | None = None
     daily_log: DailyLogBase | None = None
 
