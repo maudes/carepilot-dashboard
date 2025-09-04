@@ -10,7 +10,7 @@ Target use case scenario: record personal/ pet daily health metrics on the prefe
 - Frontend-backend separation with Streamlit + FastAPI
 - JWT & OTP authentication, multi-environment setup
 - SQLAlchemy ORM with Pydantic schema, Alembic migrations
-- pandas for data analytics and showcase
+- Data analytics and visualization powered by pandas
 - Unit testing via pytest
 
 ### Tech Stack
@@ -86,6 +86,7 @@ carepilot-dashboard/
 
 
 ---
+
 
 
 
