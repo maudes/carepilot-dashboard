@@ -2,12 +2,15 @@
 
 CarePilot is a personal project for recording and tracking health data over time. It offers features such as metric input, goal setting, trend visualization, and data export. Beyond its practical use, it serves as a technical sandbox for exploring backend architecture, authentication, and health data standards.
 
+Target use case scenario: record personal/ pet daily health metrics on the preferred smart home hub. 
+
 ### Key Features
 
 - Health data input, record review, goal setting, trend visualization, and export
 - Frontend-backend separation with Streamlit + FastAPI
 - JWT & OTP authentication, multi-environment setup
 - SQLAlchemy ORM with Pydantic schema, Alembic migrations
+- pandas for data analytics and showcase
 - Unit testing via pytest
 
 ### Tech Stack
@@ -17,6 +20,7 @@ CarePilot is a personal project for recording and tracking health data over time
 | **Backend**  | FastAPI, SQLAlchemy, Pydantic, Redis, SMTP             |
 | **Database** | PostgreSQL + Alembic                                   |
 | **DevOps**   | Docker, multi-env configuration                        |
+| **Data Analytics**   | pandas (matplotlib)                            |
 | **Standards**| FHIR (HL7) for health data interoperability            |
 | **Testing**  | Pytest                                                 |
 
@@ -27,7 +31,7 @@ CarePilot is a personal project for recording and tracking health data over time
 
 | Phase | Description |
 |-------|-------------|
-| **Phase 1** (Done, Aug 2025)| Core feature implementation: CRUD, authentication, and architecture setup|
+| **Phase 1** (Done, Sep 2025)| Core feature implementation: CRUD, authentication, and architecture setup|
 | **Phase 2** (WIP)| FHIR conversion, MQTT, export and third-party API integration |
 | **Phase 3** (Planned)| Extend support for pet health tracking |
 
@@ -82,6 +86,7 @@ carepilot-dashboard/
 
 
 ---
+
 
 
 
