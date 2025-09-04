@@ -24,6 +24,7 @@ dependencies = [
     "jinja2>=3.0.0",
     "fastapi-mail>=1.5.0",
     "python-jose>=3.5.0",
+    "matplotlib>=3.10.6",
 ]
 
 [project.optional-dependencies]

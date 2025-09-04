@@ -9,7 +9,7 @@ load_dotenv(f".env.{env}")
 from backend.config.settings import settings
 from .db import engine, get_db
 from .models.umixin import Base
-from backend.routers import auth, profile, record, goal, history
+from backend.routers import auth, profile, record, goal, history, chart
 # import .routers all
 # Create the FastAPI app instance
 app = FastAPI(
@@ -47,6 +47,12 @@ app.include_router(
     history.router,
     prefix="/api/history",
     tags=["HistoryRecord"]
+)
+
+app.include_router(
+    chart.router,
+    prefix="/api/chart",
+    tags=["PandaCharts"]
 )
 
 # app.include_router(user.router, prefix="/api", tags=["User Management"])
