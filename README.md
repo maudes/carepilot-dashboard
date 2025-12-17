@@ -81,11 +81,12 @@ carepilot-dashboard/
 └── uv.lock                       # Dependency lock file
 
 ```
-
 ---
+### To-Do:
+- Update the structure to colima(docker) + uv for migrating to new working machine?
 
 
----
+
 
 
 
