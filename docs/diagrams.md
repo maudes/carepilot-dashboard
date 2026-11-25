@@ -1,11 +1,11 @@
-# CarePilot diagrams (Phase 2 design)
+# HealthTally diagrams (Phase 2 design)
 
 Status: draft for review. These describe the Phase 2 target, not what is implemented today.
 Phase 1 is the existing flow. Phase 2 is what is new.
 
 The overall block diagram is a separate file: [architecture.svg](architecture.svg).
 
-![CarePilot architecture](architecture.svg)
+![HealthTally architecture](architecture.svg)
 
 Contents
 

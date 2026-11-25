@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     mail_from: str
     mail_port: int = 587
     mail_server: str = "smtp.gmail.com"
-    mail_from_name: str = "CarePilot Team"
+    mail_from_name: str = "HealthTally Team"
     mail_starttls: bool = True
     mail_ssl_tls: bool = False
     use_credentials: bool = True

@@ -1,5 +1,5 @@
 [project]
-name = "carepilot"
+name = "healthtally"
 version = "0.1.0"
 description = "A self-care health tracking web application"
 authors = [{ name = "maudes" }]

@@ -57,7 +57,7 @@ reset-env:
 	rm -rf .venv
 	uv sync --frozen --extra dev
 
-# Optional: Docker is not required to run CarePilot
+# Optional: Docker is not required to run HealthTally
 docker-up:
 	docker compose --profile development up --build
 

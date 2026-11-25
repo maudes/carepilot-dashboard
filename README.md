@@ -1,6 +1,6 @@
-# CarePilot
+# HealthTally
 
-CarePilot is a personal project for recording and tracking health data over time, with metric input, goal setting, trend charts, and data export. It is also a technical sandbox for backend architecture, authentication, and health data standards.
+HealthTally is a personal project for recording and tracking health data over time, with metric input, goal setting, trend charts, and data export. It is also a technical sandbox for backend architecture, authentication, and health data standards.
 
 The target use case is simple. Download the code and run it on any screen you like, with the data staying in your own hands.
 
@@ -10,7 +10,7 @@ The target use case is simple. Download the code and run it on any screen you li
 
 ## Product direction
 
-CarePilot is for people who care about health privacy. Whether data stays local is the user's choice, and each user decides how far to go.
+HealthTally is for people who care about health privacy. Whether data stays local is the user's choice, and each user decides how far to go.
 
 - **Local-first and local-only are options.** Login, token storage, and data storage are chosen independently. A user can log in purely locally with a passphrase, or prefer the cloud-assisted email OTP login.
 - **A verified email is required in every setup.** It is the second layer that protects export, import, and storage changes. The only network use in the core product is sending these codes, and they contain no health data.
@@ -88,7 +88,7 @@ Where no passphrase exists (email-only setup), the passphrase tier falls back to
 
 Candidate libraries for the new parts, to be confirmed when implementing, are `argon2-cffi`, `sqlcipher3`, and `fhir.resources`.
 
-![CarePilot architecture](docs/architecture.svg)
+![HealthTally architecture](docs/architecture.svg)
 
 Swimlane and flow diagrams (Mermaid, rendered by GitHub) are in [docs/diagrams.md](docs/diagrams.md).
 
@@ -96,7 +96,7 @@ Swimlane and flow diagrams (Mermaid, rendered by GitHub) are in [docs/diagrams.m
 
 ## Quick start
 
-The main way to run CarePilot is with [uv](https://docs.astral.sh/uv/) and `make`. Docker is optional.
+The main way to run HealthTally is with [uv](https://docs.astral.sh/uv/) and `make`. Docker is optional.
 
 **Requirements:** Python 3.12, [uv](https://docs.astral.sh/uv/getting-started/installation/), and the system libraries WeasyPrint needs for PDF export.
 

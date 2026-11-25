@@ -17,13 +17,13 @@ def mock_template_folder(tmp_path):
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Your CarePilot One-Time-Password</title>
+    <title>Your HealthTally One-Time-Password</title>
 </head>
 <body>
     <div style="font-family: sans-serif; text-align: center; color: #333;">
         <h2>Hi, user:</h2>
         <p>
-            Thanks for using CarePilot.
+            Thanks for using HealthTally.
         </p>
         <p>
             Pelease complete the registration/ login by below one-time-password:
@@ -38,7 +38,7 @@ def mock_template_folder(tmp_path):
             Ignore the email if you do not register our service.
         </p>
         <br>
-        <p>Best,<br>CarePilot Team</p>
+        <p>Best,<br>HealthTally Team</p>
     </div>
 </body>
 </html>
