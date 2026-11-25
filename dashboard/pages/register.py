@@ -1,12 +1,13 @@
 # dashboard/pages/register.py
 import streamlit as st
 import requests
+from api_config import API_URL
 
 st.set_page_config(page_title="Register")
 st.title("Register")
 email = st.text_input("Email")
 if st.button("Send OTP"):
-    res = requests.post("http://localhost:8000/api/auth/register-request", json={"email": email})
+    res = requests.post(f"{API_URL}/api/auth/register-request", json={"email": email})
     if res.status_code == 200:
         st.session_state.otp_email = email
         st.session_state.otp_token = res.json()["token"]

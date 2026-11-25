@@ -1,7 +1,7 @@
 from datetime import datetime, timezone, timedelta
 from backend.config.settings import settings
-from jose import jwt, JWTError
-from jose.exceptions import ExpiredSignatureError
+import jwt
+from jwt.exceptions import ExpiredSignatureError, InvalidTokenError
 from fastapi import HTTPException
 import uuid
 
@@ -92,11 +92,12 @@ async def refresh_access_token(redis, refresh_token: str):
 # Decode and verify the JWT token
 def decode_token(token: str):
     try:
-        payload = jwt.decode(token, SECRET_KEY, ALGORITHM)
+        # Always pin the accepted algorithms, never trust the token header
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         return payload
     except ExpiredSignatureError:
         return "expired"
-    except JWTError:
+    except InvalidTokenError:
         return None
 
 

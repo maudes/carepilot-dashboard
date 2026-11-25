@@ -64,7 +64,7 @@ async def create_user(
 
     # Send OTP pwd to the new user's email - services/smtp.py
     is_success, msg = await send_otp_email(
-        "Your CarePilot One-Time-Password",
+        "Your HealthTally One-Time-Password",
         [payload.email],
         "otp.html",
         {"otp": otp},
@@ -119,7 +119,7 @@ async def login(
         otp = otp_generator()
 
         is_success, msg = await send_otp_email(
-            "Your CarePilot One-Time-Password",
+            "Your HealthTally One-Time-Password",
             [payload.email],
             "otp.html",
             {"otp": otp},

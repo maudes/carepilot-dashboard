@@ -13,7 +13,7 @@ from backend.routers import auth, profile, record, goal, history, chart
 # import .routers all
 # Create the FastAPI app instance
 app = FastAPI(
-    title="CarePilot API",
+    title="HealthTally API",
     description="Maude's FastAPI/ Health side project.",
     version="0.1.0",
 )

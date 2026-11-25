@@ -2,6 +2,7 @@
 
 import streamlit as st
 import requests
+from api_config import API_URL
 
 st.set_page_config(page_title="Logout")
 st.title("Logout")
@@ -24,7 +25,7 @@ if st.button("Logout"):
     }
 
     try:
-        res = requests.post("http://localhost:8000/api/auth/logout", headers=headers)
+        res = requests.post(f"{API_URL}/api/auth/logout", headers=headers)
         if res.status_code == 200:
             st.session_state.clear()
             st.success("You have been logged out successfully.")

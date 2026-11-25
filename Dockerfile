@@ -1,25 +1,33 @@
 FROM python:3.12-slim
 
-# 安裝系統依賴（PostgreSQL、WeasyPrint、Redis client 等）
-RUN apt-get update && apt-get install -y \
-    build-essential libpq-dev libffi-dev libcairo2 libpango-1.0-0 libpangocairo-1.0-0 \
-    curl git && \
+# Runtime libraries for WeasyPrint. All Python dependencies ship wheels,
+# so no compiler is needed.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcairo2 libpango-1.0-0 libpangocairo-1.0-0 && \
     rm -rf /var/lib/apt/lists/*
 
-# 安裝 uv
-RUN pip install uv
+# Pinned uv, copied from the official image
+COPY --from=ghcr.io/astral-sh/uv:0.9.27 /uv /usr/local/bin/uv
 
-# 設定工作目錄
+# Keep the venv outside /app, so a bind mount over /app in docker-compose
+# does not hide it
+ENV UV_PROJECT_ENVIRONMENT=/opt/venv \
+    UV_LINK_MODE=copy \
+    PATH="/opt/venv/bin:$PATH"
+
 WORKDIR /app
 
-# 複製 pyproject.toml 與 uv.lock（若存在）
-COPY pyproject.toml uv.lock* ./
+# Install exactly what uv.lock says (runtime only, no dev tools)
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
 
-# 安裝主依賴（不含 dev/visual）
-RUN uv pip install --system --no-deps -r <(uv pip compile pyproject.toml)
-
-# 複製整個專案
 COPY . .
 
-# 預設啟動指令（可由 docker-compose 覆蓋）
-CMD ["uvicorn", "dashboard.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Run as a non-root user
+RUN useradd --create-home app && chown -R app:app /app
+USER app
+
+EXPOSE 8000
+
+# Default command, can be overridden by docker-compose
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]

@@ -26,6 +26,6 @@ def get_db():
     finally:
         db.close()
 
-# 每次 API 被呼叫時，FastAPI 會執行 get_db()，開啟一個 DB session。
-# 路由中的參數 db: Session = Depends(get_db) 就會拿到這個 session。
-# 執行完後自動關閉，確保資源釋放。
+# 每次 API 被呼叫時，FastAPI 會執行 get_db()，開啟一個 DB session
+# 路由中的參數 db: Session = Depends(get_db) 就會拿到這個 session
+# 執行完後自動關閉，確保資源釋放

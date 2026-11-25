@@ -1,13 +1,12 @@
-version: '3.8'
-
+# Optional. HealthTally runs without Docker: see "Quick start" in README.md
 services:
   web:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: carepilot_web
+    container_name: healthtally_web
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     env_file:
       - .env.${ENV:-development}
     volumes:
@@ -17,16 +16,36 @@ services:
     command: >
       bash -c "
         if [ \"$ENV\" = \"production\" ]; then
-          alembic upgrade head;
-        fi &&
-        uvicorn dashboard.main:app --host 0.0.0.0 --port 8000 --reload
+          alembic -c backend/alembic.ini upgrade head &&
+          uvicorn backend.main:app --host 0.0.0.0 --port 8000;
+        else
+          uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload;
+        fi
       "
+
+  # The dashboard only needs to know where the API is; it gets no secrets
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: healthtally_dashboard
+    ports:
+      - "127.0.0.1:8501:8501"
+    environment:
+      API_URL: http://web:8000
+    volumes:
+      - .:/app
+    depends_on:
+      - web
+    command: >
+      streamlit run dashboard/app.py
+      --server.address 0.0.0.0 --server.port 8501 --server.headless true
 
   redis:
     image: redis:7
-    container_name: carepilot_redis
+    container_name: healthtally_redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     profiles:

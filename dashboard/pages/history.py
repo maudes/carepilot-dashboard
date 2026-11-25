@@ -1,6 +1,7 @@
 from datetime import date, timedelta
 import streamlit as st
 import requests
+from api_config import API_URL
 
 st.set_page_config(page_title="My History")
 st.title("My History")
@@ -27,7 +28,7 @@ def auto_refresh(method, url, json=None, params=None):
 
     if response.status_code == 401 and refresh_token:
         refresh_headers = {"Authorization": f"Bearer {refresh_token}"}
-        refresh_res = requests.post("http://localhost:8000/api/auth/token-refresh", headers=refresh_headers)
+        refresh_res = requests.post(f"{API_URL}/api/auth/token-refresh", headers=refresh_headers)
 
         if refresh_res.status_code == 200:
             new_token = refresh_res.json().get("access_token")
@@ -50,7 +51,7 @@ selected_date = st.date_input("Select Date", value=today, min_value=six_months_a
 
 # Search button
 if st.button("Search Record"):
-    response = auto_refresh("GET", "http://localhost:8000/api/history", params={"record_date": str(selected_date)})
+    response = auto_refresh("GET", f"{API_URL}/api/history", params={"record_date": str(selected_date)})
     if response.status_code == 200:
         st.session_state["record_data"] = response.json()
         st.session_state["record_date"] = str(selected_date)
@@ -130,7 +131,7 @@ if record_data is not None and record_date:
             }
 
             method = "put" if "id" in record_data else "post"
-            save_res = auto_refresh(method, "http://localhost:8000/api/history", json=payload, params={"record_date": record_date})
+            save_res = auto_refresh(method, f"{API_URL}/api/history", json=payload, params={"record_date": record_date})
 
             if save_res.status_code in [200, 201]:
                 st.success("Record saved successfully.")
@@ -147,7 +148,7 @@ if record_data is not None and record_date:
     if "id" in record_data:
         confirm = st.button("Delete This Record")
         if confirm:
-            delete_res = auto_refresh("delete", "http://localhost:8000/api/history", params={"record_date": record_date})
+            delete_res = auto_refresh("delete", f"{API_URL}/api/history", params={"record_date": record_date})
             if delete_res.status_code == 200:
                 st.success("Record deleted.")
                 st.session_state.pop("record_data", None)

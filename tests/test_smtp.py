@@ -17,13 +17,13 @@ def mock_template_folder(tmp_path):
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Your CarePilot One-Time-Password</title>
+    <title>Your HealthTally One-Time-Password</title>
 </head>
 <body>
     <div style="font-family: sans-serif; text-align: center; color: #333;">
         <h2>Hi, user:</h2>
         <p>
-            Thanks for using CarePilot.
+            Thanks for using HealthTally.
         </p>
         <p>
             Pelease complete the registration/ login by below one-time-password:
@@ -38,7 +38,7 @@ def mock_template_folder(tmp_path):
             Ignore the email if you do not register our service.
         </p>
         <br>
-        <p>Best,<br>CarePilot Team</p>
+        <p>Best,<br>HealthTally Team</p>
     </div>
 </body>
 </html>
@@ -77,7 +77,8 @@ async def test_send_otp_email_success(mock_jinja2_env):
         
         message_schema = mock_fastmail.send_message.call_args[0][0]
         assert message_schema.subject == subject
-        assert message_schema.recipients == recipients
+        # fastapi-mail >= 1.6 wraps each address in a NameEmail object
+        assert [str(r.email) for r in message_schema.recipients] == recipients
         assert "Pelease complete the registration/ login by below one-time-password:" in message_schema.body
         assert "123456" in message_schema.body
         
