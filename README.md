@@ -132,7 +132,7 @@ The image installs from `uv.lock`, runs as a non-root user, and does not contain
 ## Project Structure
 
 ```
-carepilot-dashboard/
+healthtally/
 ├── backend/                      # FastAPI backend
 │   ├── alembic/                  # Migrations
 │   ├── config/                   # Settings
