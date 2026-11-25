@@ -1,11 +1,5 @@
 FROM python:3.12-slim
 
-# Runtime libraries for WeasyPrint. All Python dependencies ship wheels,
-# so no compiler is needed.
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libcairo2 libpango-1.0-0 libpangocairo-1.0-0 && \
-    rm -rf /var/lib/apt/lists/*
-
 # Pinned uv, copied from the official image
 COPY --from=ghcr.io/astral-sh/uv:0.9.27 /uv /usr/local/bin/uv
 

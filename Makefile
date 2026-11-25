@@ -1,4 +1,4 @@
-.PHONY: help check-libs setup install dev api ui test lint clean reset-env docker-up docker-down
+.PHONY: help setup install dev api ui test lint clean reset-env docker-up docker-down
 
 help:
 	@echo "Targets:"
@@ -13,20 +13,10 @@ help:
 	@echo "  docker-up   Optional: run the backend in Docker"
 	@echo "  docker-down Optional: stop the Docker services"
 
-# WeasyPrint needs cairo and pango from the system
-check-libs:
-	@if [ "$$(uname)" = "Darwin" ]; then \
-		for p in cairo pango; do \
-			brew list $$p >/dev/null 2>&1 || { echo "Missing $$p. Run: brew install $$p"; exit 1; }; \
-		done; \
-	else \
-		echo "Linux: make sure libcairo2, libpango-1.0-0 and libpangocairo-1.0-0 are installed"; \
-	fi
-
-setup: check-libs
+setup:
 	uv sync --frozen --extra dev
 
-install: check-libs
+install:
 	uv sync --frozen --no-dev
 
 api:
