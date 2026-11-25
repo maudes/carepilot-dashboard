@@ -30,6 +30,8 @@ HealthTally is for people who care about health privacy. Whether data stays loca
 
 ## Phase 1 (done)
 
+Phase 1 (formerly CarePilot) covered:
+
 - Health data input, record review, goal setting, trend charts
 - Email OTP login with JWT, Streamlit + FastAPI on PostgreSQL
 - Unit tests and multi-environment Docker setup
