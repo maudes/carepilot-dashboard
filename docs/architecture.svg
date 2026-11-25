@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="700" viewBox="0 0 680 700" role="img">
+  <title>CarePilot architecture, Phase 1 and Phase 2</title>
+  <desc>Streamlit dashboard calls a FastAPI backend (auth gate, health APIs, config API, data import and export). Login method, token store and data storage are independent options set by config; login methods can both be enabled. A verified email plus SMTP is required in every setup. Export, import and storage switch require an email OTP step-up and produce or consume a JSON or FHIR file.</desc>
+  <style>
+    text { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+    .th { font-size: 14px; font-weight: 500; fill: #2C2C2A; }
+    .ts { font-size: 12px; fill: #5F5E5A; }
+    .t1 { font-size: 14px; font-weight: 500; fill: #085041; }
+    .s1 { font-size: 12px; fill: #0F6E56; }
+    .t2 { font-size: 14px; font-weight: 500; fill: #3C3489; }
+    .s2 { font-size: 12px; fill: #534AB7; }
+    .box { fill: #F1EFE8; stroke: #888780; stroke-width: 0.5; }
+    .cont { fill: none; stroke: #888780; stroke-width: 0.5; stroke-dasharray: 4 4; }
+    .v1 { fill: #E1F5EE; stroke: #0F6E56; stroke-width: 0.5; }
+    .v2 { fill: #EEEDFE; stroke: #534AB7; stroke-width: 0.5; }
+    .arr { fill: none; stroke: #5F5E5A; stroke-width: 1.5; }
+  </style>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+      <path d="M2 1L8 5L2 9" fill="none" stroke="#5F5E5A" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+  <rect width="680" height="700" fill="#ffffff"/>
+
+  <rect class="box" x="200" y="20" width="280" height="56" rx="8"/>
+  <text class="th" x="340" y="40" text-anchor="middle" dominant-baseline="central">Streamlit dashboard</text>
+  <text class="ts" x="340" y="58" text-anchor="middle" dominant-baseline="central">Pages, wizard, settings</text>
+  <line class="arr" x1="340" y1="76" x2="340" y2="102" marker-end="url(#arrow)"/>
+
+  <rect class="cont" x="40" y="104" width="600" height="114" rx="12"/>
+  <text class="th" x="56" y="122" dominant-baseline="central">FastAPI backend</text>
+
+  <rect class="v2" x="50" y="138" width="125" height="56" rx="8"/>
+  <text class="t2" x="112" y="156" text-anchor="middle" dominant-baseline="central">Auth gate</text>
+  <text class="s2" x="112" y="174" text-anchor="middle" dominant-baseline="central">Any login</text>
+
+  <rect class="v1" x="195" y="138" width="125" height="56" rx="8"/>
+  <text class="t1" x="257" y="156" text-anchor="middle" dominant-baseline="central">Health APIs</text>
+  <text class="s1" x="257" y="174" text-anchor="middle" dominant-baseline="central">Record, chart</text>
+
+  <rect class="v2" x="340" y="138" width="125" height="56" rx="8"/>
+  <text class="t2" x="402" y="156" text-anchor="middle" dominant-baseline="central">Config API</text>
+  <text class="s2" x="402" y="174" text-anchor="middle" dominant-baseline="central">Wizard, config</text>
+
+  <rect class="v2" x="485" y="138" width="125" height="56" rx="8"/>
+  <text class="t2" x="547" y="156" text-anchor="middle" dominant-baseline="central">Data I/O</text>
+  <text class="s2" x="547" y="174" text-anchor="middle" dominant-baseline="central">Export, import</text>
+
+  <line class="arr" x1="340" y1="218" x2="340" y2="248" marker-end="url(#arrow)"/>
+
+  <rect class="cont" x="40" y="250" width="600" height="316" rx="12"/>
+  <text class="th" x="56" y="270" dominant-baseline="central">Options, set by config</text>
+  <text class="ts" x="56" y="288" dominant-baseline="central">Each row is independent of the others</text>
+
+  <text class="th" x="56" y="322" dominant-baseline="central">Login</text>
+  <text class="ts" x="56" y="340" dominant-baseline="central">Both can be on</text>
+  <rect class="v1" x="190" y="304" width="205" height="52" rx="8"/>
+  <text class="t1" x="292" y="321" text-anchor="middle" dominant-baseline="central">Email OTP login</text>
+  <text class="s1" x="292" y="339" text-anchor="middle" dominant-baseline="central">SMTP sends the code</text>
+  <text class="th" x="405" y="330" text-anchor="middle" dominant-baseline="central">+</text>
+  <rect class="v2" x="415" y="304" width="205" height="52" rx="8"/>
+  <text class="t2" x="517" y="321" text-anchor="middle" dominant-baseline="central">Passphrase or PIN</text>
+  <text class="s2" x="517" y="339" text-anchor="middle" dominant-baseline="central">Argon2id, idle lock</text>
+
+  <text class="th" x="56" y="386" dominant-baseline="central">Token store</text>
+  <text class="ts" x="56" y="404" dominant-baseline="central">Pick one</text>
+  <rect class="v1" x="190" y="368" width="205" height="52" rx="8"/>
+  <text class="t1" x="292" y="385" text-anchor="middle" dominant-baseline="central">Upstash Redis</text>
+  <text class="s1" x="292" y="403" text-anchor="middle" dominant-baseline="central">OTP codes, token ids</text>
+  <rect class="v2" x="415" y="368" width="205" height="52" rx="8"/>
+  <text class="t2" x="517" y="385" text-anchor="middle" dominant-baseline="central">LocalKV</text>
+  <text class="s2" x="517" y="403" text-anchor="middle" dominant-baseline="central">Local, no Redis</text>
+
+  <text class="th" x="56" y="450" dominant-baseline="central">Data storage</text>
+  <text class="ts" x="56" y="468" dominant-baseline="central">Pick one</text>
+  <rect class="v1" x="190" y="432" width="205" height="52" rx="8"/>
+  <text class="t1" x="292" y="449" text-anchor="middle" dominant-baseline="central">Postgres</text>
+  <text class="s1" x="292" y="467" text-anchor="middle" dominant-baseline="central">User and health data</text>
+  <rect class="v2" x="415" y="432" width="205" height="52" rx="8"/>
+  <text class="t2" x="517" y="449" text-anchor="middle" dominant-baseline="central">SQLite + SQLCipher</text>
+  <text class="s2" x="517" y="467" text-anchor="middle" dominant-baseline="central">Local file, encrypted</text>
+
+  <text class="th" x="56" y="514" dominant-baseline="central">Email</text>
+  <text class="ts" x="56" y="532" dominant-baseline="central">Required for all</text>
+  <rect class="v2" x="190" y="496" width="430" height="52" rx="8"/>
+  <text class="t2" x="405" y="513" text-anchor="middle" dominant-baseline="central">Verified email + SMTP</text>
+  <text class="s2" x="405" y="531" text-anchor="middle" dominant-baseline="central">Required in every setup</text>
+
+  <path class="arr" d="M610 166 L664 166 L664 616 L642 616" marker-end="url(#arrow)"/>
+  <line class="arr" x1="495" y1="588" x2="495" y2="550" marker-end="url(#arrow)"/>
+
+  <rect class="v2" x="350" y="588" width="290" height="56" rx="8"/>
+  <text class="t2" x="495" y="606" text-anchor="middle" dominant-baseline="central">Email OTP step-up</text>
+  <text class="s2" x="495" y="624" text-anchor="middle" dominant-baseline="central">Export, import, storage</text>
+  <line class="arr" x1="350" y1="616" x2="322" y2="616" marker-end="url(#arrow)"/>
+  <rect class="box" x="40" y="588" width="280" height="56" rx="8"/>
+  <text class="th" x="180" y="606" text-anchor="middle" dominant-baseline="central">Data file</text>
+  <text class="ts" x="180" y="624" text-anchor="middle" dominant-baseline="central">JSON or FHIR, only egress</text>
+
+  <rect class="v1" x="40" y="676" width="12" height="12" rx="2"/>
+  <text class="ts" x="60" y="682" dominant-baseline="central">Phase 1 (existing)</text>
+  <rect class="v2" x="210" y="676" width="12" height="12" rx="2"/>
+  <text class="ts" x="230" y="682" dominant-baseline="central">Phase 2 (new)</text>
+</svg>
