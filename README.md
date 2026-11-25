@@ -100,15 +100,7 @@ Swimlane and flow diagrams (Mermaid, rendered by GitHub) are in [docs/diagrams.m
 
 The main way to run HealthTally is with [uv](https://docs.astral.sh/uv/) and `make`. Docker is optional.
 
-**Requirements:** Python 3.12, [uv](https://docs.astral.sh/uv/getting-started/installation/), and the system libraries WeasyPrint needs for PDF export.
-
-```bash
-# macOS
-brew install cairo pango
-
-# Debian / Ubuntu
-sudo apt install libcairo2 libpango-1.0-0 libpangocairo-1.0-0
-```
+**Requirements:** [uv](https://docs.astral.sh/uv/getting-started/installation/). It installs Python 3.12 and every dependency inside the project's `.venv`, so nothing is installed system-wide.
 
 ```bash
 make setup    # install dependencies exactly as pinned in uv.lock
