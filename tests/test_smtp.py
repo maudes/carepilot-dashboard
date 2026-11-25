@@ -77,7 +77,8 @@ async def test_send_otp_email_success(mock_jinja2_env):
         
         message_schema = mock_fastmail.send_message.call_args[0][0]
         assert message_schema.subject == subject
-        assert message_schema.recipients == recipients
+        # fastapi-mail >= 1.6 wraps each address in a NameEmail object
+        assert [str(r.email) for r in message_schema.recipients] == recipients
         assert "Pelease complete the registration/ login by below one-time-password:" in message_schema.body
         assert "123456" in message_schema.body
         
