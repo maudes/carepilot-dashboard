@@ -1,0 +1,23 @@
+# Secrets and local config must never enter an image
+.env
+.env.*
+
+# Python and tooling
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Repository metadata and docs
+.git/
+.gitignore
+docs/
+tests/
+*.md
+
+# Local data
+*.db
+*.sqlite3
+dump.rdb

@@ -82,7 +82,7 @@ Where no passphrase exists (email-only setup), the passphrase tier falls back to
 | **Token store** | 🟢 Redis (Upstash) <br> 🟣 LocalKV |
 | **Data analytics** | 🟢 pandas, matplotlib |
 | **Standards** | 🟣 FHIR (HL7) Bundle import and export |
-| **DevOps** | 🟢 Docker, multi-env configuration |
+| **DevOps** | 🟢 uv, Makefile, multi-env configuration <br> 🟢 Docker (optional) |
 | **Testing** | 🟢 pytest <br> 🟣 Tests for auth modes and export |
 | **Development** | 🟢 Hand-coded <br> 🟣 Claude Code in the development flow |
 
@@ -91,6 +91,41 @@ Candidate libraries for the new parts, to be confirmed when implementing, are `a
 ![CarePilot architecture](docs/architecture.svg)
 
 Swimlane and flow diagrams (Mermaid, rendered by GitHub) are in [docs/diagrams.md](docs/diagrams.md).
+
+---
+
+## Quick start
+
+The main way to run CarePilot is with [uv](https://docs.astral.sh/uv/) and `make`. Docker is optional.
+
+**Requirements:** Python 3.12, [uv](https://docs.astral.sh/uv/getting-started/installation/), and the system libraries WeasyPrint needs for PDF export.
+
+```bash
+# macOS
+brew install cairo pango
+
+# Debian / Ubuntu
+sudo apt install libcairo2 libpango-1.0-0 libpangocairo-1.0-0
+```
+
+```bash
+make setup    # install dependencies exactly as pinned in uv.lock
+make dev      # backend on :8000, dashboard on :8501
+make test     # run the tests
+```
+
+Settings are read from `.env.development` (or `.env.<ENV>`). These files are git-ignored, so create your own and never commit it. Run `make help` to see every target.
+
+### Docker (optional)
+
+If you already have Docker, you can run the backend and the dashboard in containers instead:
+
+```bash
+make docker-up      # or: docker compose --profile development up --build
+make docker-down
+```
+
+The image installs from `uv.lock`, runs as a non-root user, and does not contain your `.env` files. Ports are bound to `127.0.0.1` only.
 
 ---
 
@@ -112,19 +147,13 @@ carepilot-dashboard/
 │   └── pages/                    # login, register, verify, home, daily, history, stats, profile, logout
 ├── docs/                         # Phase 2 design diagrams
 ├── tests/                        # Backend tests
-├── Dockerfile
-├── docker-compose.yml
-├── Makefile                      # Task automation
+├── Dockerfile                    # Optional
+├── docker-compose.yml            # Optional
+├── .dockerignore
+├── Makefile                      # Main entry: setup, dev, test, lint
 ├── pyproject.toml
 ├── pytest.ini
 ├── uv.lock
 ├── LICENSE                       # MIT License
 └── README.md
 ```
-
----
-
-## To-Do
-
-- Update the structure to colima (docker) + uv for migrating to a new working machine
-- Phase 2 order (proposed): export OTP step-up, LocalKV and SQLite compatibility, passphrase login and idle lock, SQLCipher encryption, then the setup wizard and settings page

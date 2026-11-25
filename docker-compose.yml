@@ -1,5 +1,4 @@
-version: '3.8'
-
+# Optional. CarePilot runs without Docker: see "Quick start" in README.md
 services:
   web:
     build:
@@ -7,7 +6,8 @@ services:
       dockerfile: Dockerfile
     container_name: carepilot_web
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"   # FastAPI backend
+      - "127.0.0.1:8501:8501"   # Streamlit dashboard (runs in the dashboard service below)
     env_file:
       - .env.${ENV:-development}
     volumes:
@@ -17,16 +17,36 @@ services:
     command: >
       bash -c "
         if [ \"$ENV\" = \"production\" ]; then
-          alembic upgrade head;
-        fi &&
-        uvicorn dashboard.main:app --host 0.0.0.0 --port 8000 --reload
+          alembic -c backend/alembic.ini upgrade head &&
+          uvicorn backend.main:app --host 0.0.0.0 --port 8000;
+        else
+          uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload;
+        fi
       "
+
+  # The dashboard calls the API at localhost:8000, so it shares the network
+  # of the web service
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: carepilot_dashboard
+    network_mode: "service:web"
+    env_file:
+      - .env.${ENV:-development}
+    volumes:
+      - .:/app
+    depends_on:
+      - web
+    command: >
+      streamlit run dashboard/app.py
+      --server.address 0.0.0.0 --server.port 8501 --server.headless true
 
   redis:
     image: redis:7
     container_name: carepilot_redis
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     volumes:
       - redis_data:/data
     profiles:
