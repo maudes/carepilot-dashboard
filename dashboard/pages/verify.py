@@ -1,6 +1,7 @@
 # dashboard/pages/verify.py
 import streamlit as st
 import requests
+from api_config import API_URL
 
 st.set_page_config(page_title="Verify")
 
@@ -31,7 +32,7 @@ if st.button("Verify"):
         "token": otp_token,
     }
     res = requests.post(
-        f"http://localhost:8000/api/auth/verify?mode={mode}",
+        f"{API_URL}/api/auth/verify?mode={mode}",
         json=payload
     )
     if res.status_code == 200:

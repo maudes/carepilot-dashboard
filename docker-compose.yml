@@ -6,8 +6,7 @@ services:
       dockerfile: Dockerfile
     container_name: carepilot_web
     ports:
-      - "127.0.0.1:8000:8000"   # FastAPI backend
-      - "127.0.0.1:8501:8501"   # Streamlit dashboard (runs in the dashboard service below)
+      - "127.0.0.1:8000:8000"
     env_file:
       - .env.${ENV:-development}
     volumes:
@@ -24,16 +23,16 @@ services:
         fi
       "
 
-  # The dashboard calls the API at localhost:8000, so it shares the network
-  # of the web service
+  # The dashboard only needs to know where the API is; it gets no secrets
   dashboard:
     build:
       context: .
       dockerfile: Dockerfile
     container_name: carepilot_dashboard
-    network_mode: "service:web"
-    env_file:
-      - .env.${ENV:-development}
+    ports:
+      - "127.0.0.1:8501:8501"
+    environment:
+      API_URL: http://web:8000
     volumes:
       - .:/app
     depends_on:

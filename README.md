@@ -114,7 +114,7 @@ make dev      # backend on :8000, dashboard on :8501
 make test     # run the tests
 ```
 
-Settings are read from `.env.development` (or `.env.<ENV>`). These files are git-ignored, so create your own and never commit it. Run `make help` to see every target.
+Settings are read from `.env.development` (or `.env.<ENV>`). These files are git-ignored, so create your own and never commit it. The dashboard finds the API through the `API_URL` environment variable (default `http://localhost:8000`). Run `make help` to see every target.
 
 ### Docker (optional)
 

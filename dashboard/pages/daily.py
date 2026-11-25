@@ -1,6 +1,7 @@
 from datetime import date
 import streamlit as st
 import requests
+from api_config import API_URL
 
 st.set_page_config(page_title="My Daily Record")
 st.title("My Daily Record")
@@ -27,7 +28,7 @@ def auto_refresh(method, url, json=None):
 
     if response.status_code == 401 and refresh_token:
         refresh_headers = {"Authorization": f"Bearer {refresh_token}"}
-        refresh_res = requests.post("http://localhost:8000/api/auth/token-refresh", headers=refresh_headers)
+        refresh_res = requests.post(f"{API_URL}/api/auth/token-refresh", headers=refresh_headers)
 
         if refresh_res.status_code == 200:
             new_token = refresh_res.json().get("access_token")
@@ -44,7 +45,7 @@ def auto_refresh(method, url, json=None):
 
 
 # API endpoint
-record_url = "http://localhost:8000/api/record/today"
+record_url = f"{API_URL}/api/record/today"
 
 
 # Get Today's Record

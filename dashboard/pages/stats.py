@@ -2,6 +2,7 @@ import streamlit as st
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
+from api_config import API_URL
 
 st.set_page_config(page_title="My Health Statistics")
 st.title("My Health Statistics")
@@ -28,7 +29,7 @@ def auto_refresh(method, url, params=None):
 
     if response.status_code == 401 and refresh_token:
         refresh_headers = {"Authorization": f"Bearer {refresh_token}"}
-        refresh_res = requests.post("http://localhost:8000/api/auth/token-refresh", headers=refresh_headers)
+        refresh_res = requests.post(f"{API_URL}/api/auth/token-refresh", headers=refresh_headers)
 
         if refresh_res.status_code == 200:
             new_token = refresh_res.json().get("access_token")
@@ -45,7 +46,7 @@ def auto_refresh(method, url, params=None):
 
 
 # API endpoint
-record_url = "http://localhost:8000/api/chart/me"
+record_url = f"{API_URL}/api/chart/me"
 
 # Select date range
 start_date = st.date_input("Start Date")
